@@ -28,8 +28,9 @@ class PinWithState:
 
 
 class FirmataGPIO:
-    def __init__(self):
+    def __init__(self, spacestate_callback=None):
         self.state = SpaceState.UNDETERMINED
+        self.spacestate_callback = spacestate_callback
 
         try:
             self.board = pyfirmata2.Arduino(DEVICE)
@@ -93,11 +94,11 @@ class FirmataGPIO:
         self._update_switch_state()
 
     def _update_switch_state(self):
+        last_state = self.state
+
         if self.board is None:
             self.state = SpaceState.UNDETERMINED
-            return
-
-        if self.inputs[Pin.SWITCH_TOP]["state"] and self.inputs[Pin.SWITCH_BOTTOM]["state"]:
+        elif self.inputs[Pin.SWITCH_TOP]["state"] and self.inputs[Pin.SWITCH_BOTTOM]["state"]:
             print("Both open and closed contacts are connected. Weird...")
             self.state = SpaceState.UNDETERMINED
         elif self.inputs[Pin.SWITCH_TOP]["state"]:
@@ -110,9 +111,15 @@ class FirmataGPIO:
             print("Switch is somewhere in between")
             self.state = SpaceState.UNDETERMINED
 
+        if self.state != last_state and self.spacestate_callback is not None:
+            self.spacestate_callback(self.state)
+
 
 if __name__ == '__main__':
-    gpio = FirmataGPIO()
+    def spacestate_callback(state: SpaceState):
+        print('Switch state changed to:', state)
+
+    gpio = FirmataGPIO(spacestate_callback)
 
     try:
         while True:
