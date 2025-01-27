@@ -1,0 +1,3 @@
+pygame
+pyfirmata2
+requests
