@@ -2,7 +2,7 @@ import pygame
 import random
 
 from hackerspaces import HackerSpacesNL
-from gpio import FirmataGPIO
+from gpio import FirmataGPIO, SpaceState
 
 # empirical approximations to match the geo coordinates to the map
 NL_CENTER = (5.24791, 52.1372954)
@@ -51,7 +51,22 @@ class App:
                 x = screen_center[0] + int((space.lon - NL_CENTER[0]) / NL_SCALE[0] * self.screen_width)
                 y = screen_center[1] - int((space.lat - NL_CENTER[1]) / NL_SCALE[1] * self.screen_height)
 
-                pygame.draw.circle(self.screen, (0, 255, 0) if space.state else (255, 0, 0), (x, y), 8)
+                color = (0, 255, 0) if space.state else (255, 0, 0)
+                if space.name == "Hacker Hotel":
+                    state = self.gpio.state
+                    if state == SpaceState.OPEN:
+                        color = (0, 255, 0)
+                    elif state == SpaceState.CLOSED:
+                        color = (255, 0, 0)
+                    else:
+                        color = (255, 255, 0)
+
+                pygame.draw.circle(
+                    self.screen,
+                    color,
+                    (x, y),
+                    8
+                )
 
 
     def run(self):

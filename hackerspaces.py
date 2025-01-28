@@ -42,7 +42,6 @@ class HackerSpace:
 
 
 class HackerSpacesNL:
-
     def __init__(self):
         self.spaces: list[HackerSpace] = []
         self.lat_range = CoordinateRange()
@@ -73,6 +72,8 @@ class HackerSpacesNL:
             print('Error fetching hsnl geojson data')
             return
 
+        includes_hackerhotel = False
+
         for feature in self._data['features']:
             try:
                 name = feature['properties']['name']
@@ -83,10 +84,17 @@ class HackerSpacesNL:
                 self.lat_range.include(lat)
                 self.lon_range.include(lon)
 
+                if name == "Hacker Hotel":
+                    includes_hackerhotel = True
+
                 self.spaces.append(HackerSpace(name, lat, lon, state))
             except:
                 print('Error parsing feature:', feature)
 
+        if not includes_hackerhotel:
+            print('Hacker Hotel not found in geojson data; adding manually')
+
+            self.spaces.append(HackerSpace("Hacker Hotel", 52.2208671, 5.7208085, False))
 
 if __name__ == '__main__':
     hsnl = HackerSpacesNL()
