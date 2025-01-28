@@ -1,18 +1,10 @@
-from enum import Enum
 import pyfirmata2
+from enum import Enum
+from typing import Dict, Callable, Optional
 
 from spacestate import SpaceState
 
 DEVICE = '/dev/ttyUSB0'
-
-# fix an uncaught exception in pyfirmata2.Arduino.__del__
-pyfirmata2_del = pyfirmata2.Arduino.__del__
-def pyfirmata2_del_fix(self):
-    try:
-        pyfirmata2_del(self)
-    except AttributeError:
-        pass
-pyfirmata2.Arduino.__del__ = pyfirmata2_del_fix
 
 
 class ArduinoPin(Enum):
@@ -27,25 +19,35 @@ class ArduinoPin(Enum):
     CONFETTI = 13
 
 
+# fix an uncaught exception in pyfirmata2.Arduino.__del__
+pyfirmata2_del = pyfirmata2.Arduino.__del__
+def pyfirmata2_del_fix(self):
+    try:
+        pyfirmata2_del(self)
+    except AttributeError:
+        pass
+pyfirmata2.Arduino.__del__ = pyfirmata2_del_fix
+
+
 class FirmataPinWithValue:
-    def __init__(self, firmata_pin, value: bool = False):
-        self.firmata_pin = firmata_pin
-        self.value = value
+    def __init__(self, firmata_pin: pyfirmata2.Pin, value: bool = False) -> None:
+        self.firmata_pin: pyfirmata2.Pin = firmata_pin
+        self.value: bool = value
 
 
 class FirmataGPIO:
-    def __init__(self, spacestate_callback=None):
-        self.state = SpaceState.UNDETERMINED
-        self.spacestate_callback = spacestate_callback
+    def __init__(self, spacestate_callback: Optional[Callable[[SpaceState], None]] = None) -> None:
+        self.spacestate_callback: Optional[Callable[[SpaceState], None]] = spacestate_callback
 
+        self.state: SpaceState = SpaceState.UNDETERMINED
+        self.board: Optional[pyfirmata2.Arduino] = None
         try:
             self.board = pyfirmata2.Arduino(DEVICE)
         except Exception as e:
-            self.board = None
-            print("Failed to connect to device: %s" % e)
+            print(f"Failed to connect to device: {e}")
             return
 
-        self.inputs: map[ArduinoPin, FirmataPinWithValue] = {}
+        self.inputs: Dict[ArduinoPin, FirmataPinWithValue] = {}
         for pin_id in [ArduinoPin.SWITCH_TOP, ArduinoPin.SWITCH_BOTTOM]:
             self.inputs[pin_id] = FirmataPinWithValue(
                 firmata_pin=self.board.get_pin('d:%d:i' % pin_id.value)
@@ -57,10 +59,10 @@ class FirmataGPIO:
             self.inputs[pin_id].firmata_pin.enable_reporting()
 
         # prepare relay board
-        self.relay_vcc = self.board.get_pin('d:%d:o' % ArduinoPin.RELAY_VCC.value)
+        self.relay_vcc: pyfirmata2.Pin = self.board.get_pin('d:%d:o' % ArduinoPin.RELAY_VCC.value)
         self.relay_vcc.write(False)
 
-        self.relays: map[ArduinoPin, FirmataPinWithValue] = {}
+        self.relays: Dict[ArduinoPin, FirmataPinWithValue] = {}
         for pin_id in [ArduinoPin.RED, ArduinoPin.YELLOW, ArduinoPin.GREEN, ArduinoPin.CONFETTI]:
             self.relays[pin_id] = FirmataPinWithValue(
                 firmata_pin=self.board.get_pin('d:%d:o' % pin_id.value)
@@ -70,7 +72,7 @@ class FirmataGPIO:
         # enable relays
         self.relay_vcc.write(True)
 
-    def close(self):
+    def close(self) -> None:
         if self.board is None:
             return
 
@@ -85,23 +87,23 @@ class FirmataGPIO:
         self.board.exit()
         self.board = None
 
-    def set_relay(self, pin: ArduinoPin, state: bool):
+    def set_relay(self, pin: ArduinoPin, state: bool) -> None:
         if self.board is None or pin not in self.relays:
             return
 
         self.relays[pin].firmata_pin.write(not state)  # NB: relays are active low
-        self.relays[pin].state = state
+        self.relays[pin].value = state
 
-    def _switch_open_callback(self, data):
+    def _switch_open_callback(self, data: bool) -> None:
         self.inputs[ArduinoPin.SWITCH_TOP].value = data
         self._update_switch_state()
 
-    def _switch_closed_callback(self, data):
+    def _switch_closed_callback(self, data: bool) -> None:
         self.inputs[ArduinoPin.SWITCH_BOTTOM].value = data
         self._update_switch_state()
 
-    def _update_switch_state(self):
-        last_state = self.state
+    def _update_switch_state(self) -> None:
+        last_state: SpaceState = self.state
 
         if self.board is None:
             print("Board is not connected")

@@ -1,1 +1,1 @@
-API_KEY = 'DoNotUseDef34lt_Key'
+API_KEY: str = 'DoNotUseDef34lt_Key'
