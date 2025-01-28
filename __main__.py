@@ -1,7 +1,7 @@
 import pygame
 import requests
 
-from hackerspaces import HackerSpacesNL
+from hackerspaces import HackerSpacesNL, HH_NAME
 from gpio import FirmataGPIO
 from spacestate import SpaceState, SPACESTATE_URL
 from spacestatesecrets import API_KEY
@@ -60,29 +60,27 @@ class App:
 
         screen_center = (self.screen_width // 2, self.screen_height // 2)
 
+        for space in self.hsnl.spaces:
+            x = screen_center[0] + int((space.lon - NL_CENTER[0]) / NL_SCALE[0] * self.screen_width)
+            y = screen_center[1] - int((space.lat - NL_CENTER[1]) / NL_SCALE[1] * self.screen_height)
 
-        if self.hsnl.lat_range.range is not None and self.hsnl.lon_range.range is not None:
-            for space in self.hsnl.spaces:
-                x = screen_center[0] + int((space.lon - NL_CENTER[0]) / NL_SCALE[0] * self.screen_width)
-                y = screen_center[1] - int((space.lat - NL_CENTER[1]) / NL_SCALE[1] * self.screen_height)
+            state = space.state
+            if space.name == HH_NAME:
+                state = self.gpio.state
 
-                state = space.state
-                if space.name == "Hacker Hotel":
-                    state = self.gpio.state
+            if state == SpaceState.OPEN:
+                color = (0, 255, 0)
+            elif state == SpaceState.CLOSED:
+                color = (255, 0, 0)
+            else:
+                color = (255, 255, 0)
 
-                if state == SpaceState.OPEN:
-                    color = (0, 255, 0)
-                elif state == SpaceState.CLOSED:
-                    color = (255, 0, 0)
-                else:
-                    color = (255, 255, 0)
-
-                pygame.draw.circle(
-                    self.screen,
-                    color,
-                    (x, y),
-                    8
-                )
+            pygame.draw.circle(
+                self.screen,
+                color,
+                (x, y),
+                8
+            )
 
 
     def run(self):
