@@ -5,6 +5,15 @@ from spacestate import SpaceState
 
 DEVICE = '/dev/ttyUSB0'
 
+# fix an uncaught exception in pyfirmata2.Arduino.__del__
+pyfirmata2_del = pyfirmata2.Arduino.__del__
+def pyfirmata2_del_fix(self):
+    try:
+        pyfirmata2_del(self)
+    except AttributeError:
+        pass
+pyfirmata2.Arduino.__del__ = pyfirmata2_del_fix
+
 
 class ArduinoPin(Enum):
     RELAY_VCC = 7
