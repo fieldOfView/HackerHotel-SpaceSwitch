@@ -1,6 +1,8 @@
 import requests
 import time
 
+from spacestate import SpaceState
+
 GEOJSON_URL = 'https://hackerspaces.nl/hsmap/hsnl.geojson'
 REFRESH_PERIOD = 120  # seconds
 
@@ -28,18 +30,16 @@ class CoordinateRange:
         self.average = (self.average * self.count + value) / (self.count + 1) if self.average is not None else value
         self.count += 1
 
-
     def __str__(self):
         return f'CoordinateRange: {self.min} - {self.max} ({self.range})'
 
 
 class HackerSpace:
-    def __init__(self, name: str, lat: float, lon: float, state: bool):
+    def __init__(self, name: str, lat: float, lon: float, state: SpaceState):
         self.name = name
         self.lat = lat
         self.lon = lon
         self.state = state
-
 
 class HackerSpacesNL:
     def __init__(self):
@@ -79,7 +79,11 @@ class HackerSpacesNL:
                 name = feature['properties']['name']
                 lat = float(feature['geometry']['coordinates'][1])
                 lon = float(feature['geometry']['coordinates'][0])
-                state = feature['properties']['marker-symbol'] == '/hsmap/hs_open.png'
+                state = SpaceState.UNDETERMINED
+                if feature['properties']['marker-symbol'] == '/hsmap/hs_open.png':
+                    state = SpaceState.OPEN
+                elif feature['properties']['marker-symbol'] == '/hsmap/hs_closed.png':
+                    state = SpaceState.CLOSED
 
                 self.lat_range.include(lat)
                 self.lon_range.include(lon)
@@ -94,7 +98,7 @@ class HackerSpacesNL:
         if not includes_hackerhotel:
             print('Hacker Hotel not found in geojson data; adding manually')
 
-            self.spaces.append(HackerSpace("Hacker Hotel", 52.2208671, 5.7208085, False))
+            self.spaces.append(HackerSpace("Hacker Hotel", 52.2208671, 5.7208085, SpaceState.UNDETERMINED))
 
 if __name__ == '__main__':
     hsnl = HackerSpacesNL()

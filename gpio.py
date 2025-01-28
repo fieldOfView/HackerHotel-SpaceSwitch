@@ -1,15 +1,12 @@
 from enum import Enum
 import pyfirmata2
 
+from spacestate import SpaceState
+
 DEVICE = '/dev/ttyUSB0'
 
-class SpaceState(Enum):
-    CLOSED = 0
-    UNDETERMINED = 1
-    OPEN = 2
 
-
-class Pin(Enum):
+class ArduinoPin(Enum):
     RELAY_VCC = 7
 
     SWITCH_TOP = 8
@@ -21,10 +18,10 @@ class Pin(Enum):
     CONFETTI = 13
 
 
-class PinWithState:
-    def __init__(self, pin, state: bool = False):
-        self.pin = pin
-        self.state = state
+class FirmataPinWithValue:
+    def __init__(self, firmata_pin, value: bool = False):
+        self.firmata_pin = firmata_pin
+        self.value = value
 
 
 class FirmataGPIO:
@@ -39,28 +36,29 @@ class FirmataGPIO:
             print("Failed to connect to device: %s" % e)
             return
 
-        self.inputs = {
-            Pin.SWITCH_TOP: PinWithState(pin=self.board.get_pin('d:%d:i' % Pin.SWITCH_TOP.value)),
-            Pin.SWITCH_BOTTOM: PinWithState(pin=self.board.get_pin('d:%d:i' % Pin.SWITCH_BOTTOM.value))
-        }
-        for input in self.inputs.values():
-            input.pin.register_callback(self._input_callback)
-            input.pin.enable_reporting()
+        self.inputs: map[ArduinoPin, FirmataPinWithValue] = {}
+        for pin_id in [ArduinoPin.SWITCH_TOP, ArduinoPin.SWITCH_BOTTOM]:
+            self.inputs[pin_id] = FirmataPinWithValue(
+                firmata_pin=self.board.get_pin('d:%d:i' % pin_id.value)
+            )
+            self.inputs[pin_id].firmata_pin.register_callback(
+                self._switch_open_callback if pin_id == ArduinoPin.SWITCH_TOP
+                else self._switch_closed_callback
+            )
+            self.inputs[pin_id].firmata_pin.enable_reporting()
 
-        self.relay_vcc = self.board.get_pin('d:%d:o' % Pin.RELAY_VCC.value)
+        # prepare relay board
+        self.relay_vcc = self.board.get_pin('d:%d:o' % ArduinoPin.RELAY_VCC.value)
         self.relay_vcc.write(False)
 
-        self.relays = {
-            Pin.RED: PinWithState(pin=self.board.get_pin('d:%d:o' % Pin.RED.value)),
-            Pin.YELLOW: PinWithState(pin=self.board.get_pin('d:%d:o' % Pin.YELLOW.value)),
-            Pin.GREEN: PinWithState(pin=self.board.get_pin('d:%d:o' % Pin.GREEN.value)),
-            Pin.CONFETTI: PinWithState(pin=self.board.get_pin('d:%d:o' % Pin.CONFETTI.value))
-        }
+        self.relays: map[ArduinoPin, FirmataPinWithValue] = {}
+        for pin_id in [ArduinoPin.RED, ArduinoPin.YELLOW, ArduinoPin.GREEN, ArduinoPin.CONFETTI]:
+            self.relays[pin_id] = FirmataPinWithValue(
+                firmata_pin=self.board.get_pin('d:%d:o' % pin_id.value)
+            )
+            self.set_relay(pin_id, False)
 
-        for pin in self.relays.keys():
-            self.set_relay(pin, False)
-
-        # turn on relay board
+        # enable relays
         self.relay_vcc.write(True)
 
     def close(self):
@@ -68,8 +66,8 @@ class FirmataGPIO:
             return
 
         for input in self.inputs.values():
-            input.pin.disable_reporting()
-            input.pin.unregister_callback()
+            input.firmata_pin.disable_reporting()
+            input.firmata_pin.unregister_callback()
 
         for relay in self.relays.keys():
             self.set_relay(relay, False)
@@ -78,33 +76,34 @@ class FirmataGPIO:
         self.board.exit()
         self.board = None
 
-    def set_relay(self, pin: Pin, state: bool):
+    def set_relay(self, pin: ArduinoPin, state: bool):
         if self.board is None or pin not in self.relays:
             return
 
-        self.relays[pin].pin.write(not state)  # NB: relays are active low
+        self.relays[pin].firmata_pin.write(not state)  # NB: relays are active low
         self.relays[pin].state = state
 
     def _switch_open_callback(self, data):
-        self.inputs[Pin.SWITCH_TOP]["state"] = data
+        self.inputs[ArduinoPin.SWITCH_TOP].value = data
         self._update_switch_state()
 
     def _switch_closed_callback(self, data):
-        self.inputs[Pin.SWITCH_BOTTOM]["state"] = data
+        self.inputs[ArduinoPin.SWITCH_BOTTOM].value = data
         self._update_switch_state()
 
     def _update_switch_state(self):
         last_state = self.state
 
         if self.board is None:
+            print("Board is not connected")
             self.state = SpaceState.UNDETERMINED
-        elif self.inputs[Pin.SWITCH_TOP]["state"] and self.inputs[Pin.SWITCH_BOTTOM]["state"]:
+        elif self.inputs[ArduinoPin.SWITCH_TOP].value and self.inputs[ArduinoPin.SWITCH_BOTTOM].value:
             print("Both open and closed contacts are connected. Weird...")
             self.state = SpaceState.UNDETERMINED
-        elif self.inputs[Pin.SWITCH_TOP]["state"]:
+        elif self.inputs[ArduinoPin.SWITCH_TOP].value:
             print("Switch is set to 'open' state")
             self.state = SpaceState.OPEN
-        elif self.inputs[Pin.SWITCH_BOTTOM]["state"]:
+        elif self.inputs[ArduinoPin.SWITCH_BOTTOM].value:
             print("Switch is set to 'closed' state")
             self.state = SpaceState.CLOSED
         else:
