@@ -1,9 +1,11 @@
 import pygame
-import random
+import requests
 
 from hackerspaces import HackerSpacesNL
 from gpio import FirmataGPIO
-from spacestate import SpaceState
+from spacestate import SpaceState, SPACESTATE_URL
+from spacestatesecrets import API_KEY
+
 
 # empirical approximations to match the geo coordinates to the map
 NL_CENTER = (5.24791, 52.1372954)
@@ -34,6 +36,18 @@ class App:
         keys = pygame.key.get_pressed()
         if keys[pygame.K_ESCAPE] or keys[pygame.K_q]:
             self.running = False
+
+    def _handle_gpio_state(self, state):
+        # POST state to server
+        print("Hacker Hotel state:", state)
+        try:
+            requests.post(SPACESTATE_URL, json={
+                "API_key":API_KEY,
+                "sstate":"true" if state == SpaceState.OPEN else "false"
+            })
+        except Exception as e:
+            print("Failed to POST state", e)
+
 
     def update(self):
         self._handle_events()
