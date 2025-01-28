@@ -2,7 +2,7 @@ import requests
 import time
 
 GEOJSON_URL = 'https://hackerspaces.nl/hsmap/hsnl.geojson'
-REFRESH_PERIOD = 30  # seconds
+REFRESH_PERIOD = 120  # seconds
 
 class CoordinateRange:
     def __init__(self):
@@ -60,9 +60,10 @@ class HackerSpacesNL:
         print('Refreshing hsnl geojson data')
         try:
             self._data = requests.get(GEOJSON_URL).json()
-            self._last_refresh = time.monotonic()
         except:
             self._data.clear()
+
+        self._last_refresh = time.monotonic()
 
         self.spaces.clear()
         self.lat_range.reset()
