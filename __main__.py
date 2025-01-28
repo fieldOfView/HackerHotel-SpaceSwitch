@@ -3,7 +3,7 @@ import requests
 from typing import Tuple, Optional
 
 from hackerspaces import HackerSpacesNL, HH_NAME
-from gpio import FirmataGPIO
+from gpio import FirmataGPIO, ArduinoPin
 from spacestate import SpaceState, SPACESTATE_URL
 from spacestatesecrets import API_KEY
 
@@ -29,6 +29,7 @@ class App:
 
         self.background_image: pygame.Surface = pygame.image.load("data/hsnl.png")
 
+
     def _handle_events(self) -> None:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -38,9 +39,11 @@ class App:
         if keys[pygame.K_ESCAPE] or keys[pygame.K_q]:
             self.running = False
 
+
     def _handle_gpio_state(self, state: SpaceState) -> None:
         # POST state to server
         print("Hacker Hotel state:", state)
+
         try:
             requests.post(SPACESTATE_URL, json={
                 "API_key": API_KEY,
@@ -49,10 +52,32 @@ class App:
         except Exception as e:
             print("Failed to POST state", e)
 
+
+        # update relays via GPIO
+        if state == SpaceState.OPEN:
+            self.gpio.set_relay(ArduinoPin.RED,    False)
+            self.gpio.set_relay(ArduinoPin.YELLOW, False)
+            self.gpio.set_relay(ArduinoPin.GREEN,  True)
+            self.gpio.set_relay(ArduinoPin.CONFETTI, True)
+
+        elif state == SpaceState.UNDETERMINED:
+            self.gpio.set_relay(ArduinoPin.RED,    False)
+            self.gpio.set_relay(ArduinoPin.YELLOW, True)
+            self.gpio.set_relay(ArduinoPin.GREEN,  False)
+            self.gpio.set_relay(ArduinoPin.CONFETTI, False)
+
+        elif state == SpaceState.CLOSED:
+            self.gpio.set_relay(ArduinoPin.RED,    True)
+            self.gpio.set_relay(ArduinoPin.YELLOW, False)
+            self.gpio.set_relay(ArduinoPin.GREEN,  False)
+            self.gpio.set_relay(ArduinoPin.CONFETTI, False)
+
+
     def update(self) -> None:
         self._handle_events()
 
         self.hsnl.update()
+
 
     def draw(self) -> None:
         self.screen.fill((0, 0, 0))
@@ -91,6 +116,7 @@ class App:
 
             self.clock.tick(60)
 
+        # cleanup
         self.gpio.close()
 
 
