@@ -4,12 +4,15 @@ import random
 from hackerspaces import HackerSpacesNL
 from gpio import FirmataGPIO
 
+# empirical approximations to match the geo coordinates to the map
+NL_CENTER = (5.24791, 52.1372954)
+NL_SCALE = (3.85422677912357, 4.353798024388546)
 
 class App:
     def __init__(self):
         pygame.init()
-        self.screen_width = 720
-        self.screen_height = 1280
+        self.screen_width = 1080
+        self.screen_height = 1920
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
         pygame.display.set_caption("HotelSwitch")
 
@@ -19,6 +22,8 @@ class App:
         self.gpio = FirmataGPIO()
 
         self.running = True
+
+        self.background_image = pygame.image.load("data/hsnl.png")
 
     def _handle_events(self):
         for event in pygame.event.get():
@@ -36,11 +41,15 @@ class App:
 
     def draw(self):
         self.screen.fill((0, 0, 0))
+        self.screen.blit(self.background_image, (0, 0))
+
+        screen_center = (self.screen_width // 2, self.screen_height // 2)
+
 
         if self.hsnl.lat_range.range is not None and self.hsnl.lon_range.range is not None:
             for space in self.hsnl.spaces:
-                x = int((space.lon - self.hsnl.lon_range.min) / self.hsnl.lon_range.range * self.screen_width)
-                y = int((space.lat - self.hsnl.lat_range.min) / self.hsnl.lat_range.range * self.screen_height)
+                x = screen_center[0] + int((space.lon - NL_CENTER[0]) / NL_SCALE[0] * self.screen_width)
+                y = screen_center[1] - int((space.lat - NL_CENTER[1]) / NL_SCALE[1] * self.screen_height)
 
                 pygame.draw.circle(self.screen, (0, 255, 0) if space.state else (255, 0, 0), (x, y), 8)
 
