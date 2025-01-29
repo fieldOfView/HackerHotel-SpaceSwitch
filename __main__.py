@@ -17,9 +17,13 @@ NL_SCALE: Tuple[float, float] = (3.85422677912357, 4.353798024388546)
 class App:
     def __init__(self) -> None:
         pygame.init()
+        pygame.mouse.set_visible(False)
         self.screen_width: int = 1080
         self.screen_height: int = 1920
-        self.screen: pygame.Surface = pygame.display.set_mode((self.screen_width, self.screen_height))
+        self.screen: pygame.Surface = pygame.display.set_mode(
+            (self.screen_width, self.screen_height),
+            flags=pygame.FULLSCREEN
+        )
         pygame.display.set_caption("HotelSwitch")
 
         self.clock: pygame.time.Clock = pygame.time.Clock()
