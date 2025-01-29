@@ -1,3 +1,5 @@
+#!/home/hacker/HotelSwitch/venv/bin/python3
+
 import pygame
 import requests
 from typing import Tuple, Optional
