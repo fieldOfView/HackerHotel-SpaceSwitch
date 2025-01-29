@@ -1,4 +1,5 @@
 import pyfirmata2
+import time
 from enum import Enum
 from typing import Dict, Callable, Optional
 
@@ -8,15 +9,15 @@ DEVICE = '/dev/ttyUSB0'
 
 
 class ArduinoPin(Enum):
-    RELAY_VCC = 7
+    RELAY_VCC = 13
 
-    SWITCH_TOP = 8
-    SWITCH_BOTTOM = 9
+    SWITCH_TOP = 6
+    SWITCH_BOTTOM = 7
 
     RED = 10
     YELLOW = 11
     GREEN = 12
-    CONFETTI = 13
+    CONFETTI = 9
 
 
 # fix an uncaught exception in pyfirmata2.Arduino.__del__
@@ -44,22 +45,26 @@ class FirmataGPIO:
 
         self.state: SpaceState = SpaceState.UNDETERMINED
         self.board: Optional[pyfirmata2.Arduino] = None
+        print("Connecting to board...")
         try:
             self.board = pyfirmata2.Arduino(DEVICE)
         except Exception as e:
             print(f"Failed to connect to device: {e}")
             return
 
+        print("Setting up inputs...")
         self.inputs: Dict[ArduinoPin, FirmataPinWithValue] = {}
         for pin_id in [ArduinoPin.SWITCH_TOP, ArduinoPin.SWITCH_BOTTOM]:
             self.inputs[pin_id] = FirmataPinWithValue(
-                firmata_pin=self.board.get_pin('d:%d:i' % pin_id.value)
+                firmata_pin=self.board.get_pin('d:%d:u' % pin_id.value)
             )
             self.inputs[pin_id].firmata_pin.register_callback(
-                self._switch_open_callback if pin_id == ArduinoPin.SWITCH_TOP
-                else self._switch_closed_callback
+                self._switch_top_callback if pin_id == ArduinoPin.SWITCH_TOP
+                else self._switch_bottom_callback
             )
             self.inputs[pin_id].firmata_pin.enable_reporting()
+
+        print("Setting up outputs...")
 
         # prepare relay board
         self.relay_vcc: pyfirmata2.Pin = self.board.get_pin('d:%d:o' % ArduinoPin.RELAY_VCC.value)
@@ -97,11 +102,11 @@ class FirmataGPIO:
         self.relays[pin].firmata_pin.write(not state)  # NB: relays are active low
         self.relays[pin].value = state
 
-    def _switch_open_callback(self, data: bool) -> None:
+    def _switch_top_callback(self, data: bool) -> None:
         self.inputs[ArduinoPin.SWITCH_TOP].value = data
         self._update_switch_state()
 
-    def _switch_closed_callback(self, data: bool) -> None:
+    def _switch_bottom_callback(self, data: bool) -> None:
         self.inputs[ArduinoPin.SWITCH_BOTTOM].value = data
         self._update_switch_state()
 
@@ -134,9 +139,14 @@ if __name__ == '__main__':
 
     gpio = FirmataGPIO(spacestate_callback)
 
+    state: bool = False
+
     try:
         while True:
-            pass
+            state = not state
+            gpio.set_relay(ArduinoPin.RED, state)
+            gpio.set_relay(ArduinoPin.GREEN, not state)
+            time.sleep(0.5)
     except KeyboardInterrupt:
         print('Closing...')
         gpio.close()
