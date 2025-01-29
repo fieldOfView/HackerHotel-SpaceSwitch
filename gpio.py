@@ -28,6 +28,9 @@ def pyfirmata2_del_fix(self):
         pass
 pyfirmata2.Arduino.__del__ = pyfirmata2_del_fix
 
+# fix a typo in pyfirmata2.Pin
+pyfirmata2.Pin.unregister_callback = pyfirmata2.Pin.unregiser_callback
+
 
 class FirmataPinWithValue:
     def __init__(self, firmata_pin: pyfirmata2.Pin, value: bool = False) -> None:
