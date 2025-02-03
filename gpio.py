@@ -63,7 +63,7 @@ class FirmataGPIO:
         self.inputs: Dict[ArduinoPin, FirmataPinWithValue] = {}
         for pin_id in [ArduinoPin.SWITCH_TOP, ArduinoPin.SWITCH_BOTTOM]:
             self.inputs[pin_id] = FirmataPinWithValue(
-                firmata_pin=self.board.get_pin('d:%d:u' % pin_id.value)
+                firmata_pin=self.board.get_pin('d:%d:i' % pin_id.value)
             )
             self.inputs[pin_id].firmata_pin.register_callback(
                 self._switch_top_callback if pin_id == ArduinoPin.SWITCH_TOP
@@ -156,9 +156,11 @@ if __name__ == '__main__':
         while True:
             state = not state
             gpio.set_relay(ArduinoPin.RED1, state)
-            gpio.set_relay(ArduinoPin.RED2, not state)
+            gpio.set_relay(ArduinoPin.RED2, state)
             gpio.set_relay(ArduinoPin.GREEN1, state)
-            gpio.set_relay(ArduinoPin.GREEN2, not state)
+            gpio.set_relay(ArduinoPin.GREEN2, state)
+            gpio.set_relay(ArduinoPin.YELLOW1, state)
+            gpio.set_relay(ArduinoPin.YELLOW2, state)
             time.sleep(0.5)
     except KeyboardInterrupt:
         print('Closing...')
