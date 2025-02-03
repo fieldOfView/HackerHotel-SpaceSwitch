@@ -11,8 +11,8 @@ DEVICE = '/dev/ttyUSB0'
 class ArduinoPin(Enum):
     RELAY_VCC = 13
 
-    SWITCH_TOP = 4
-    SWITCH_BOTTOM = 3
+    SWITCH_TOP = 3
+    SWITCH_BOTTOM = 4
 
     RED1 = 12
     YELLOW1 = 11
@@ -109,16 +109,16 @@ class FirmataGPIO:
     def set_relay(self, pin: ArduinoPin, state: bool) -> None:
         if self.board is None or pin not in self.relays:
             return
-
+        
         self.relays[pin].firmata_pin.write(not state)  # NB: relays are active low
         self.relays[pin].value = state
 
     def _switch_top_callback(self, data: bool) -> None:
-        self.inputs[ArduinoPin.SWITCH_TOP].value = data
+        self.inputs[ArduinoPin.SWITCH_TOP].value = not data
         self._update_switch_state()
 
     def _switch_bottom_callback(self, data: bool) -> None:
-        self.inputs[ArduinoPin.SWITCH_BOTTOM].value = data
+        self.inputs[ArduinoPin.SWITCH_BOTTOM].value = not data
         self._update_switch_state()
 
     def _update_switch_state(self) -> None:
@@ -157,6 +157,8 @@ if __name__ == '__main__':
             state = not state
             gpio.set_relay(ArduinoPin.RED1, state)
             gpio.set_relay(ArduinoPin.RED2, not state)
+            gpio.set_relay(ArduinoPin.GREEN1, state)
+            gpio.set_relay(ArduinoPin.GREEN2, not state)
             time.sleep(0.5)
     except KeyboardInterrupt:
         print('Closing...')
