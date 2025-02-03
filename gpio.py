@@ -11,13 +11,17 @@ DEVICE = '/dev/ttyUSB0'
 class ArduinoPin(Enum):
     RELAY_VCC = 13
 
-    SWITCH_TOP = 6
-    SWITCH_BOTTOM = 7
+    SWITCH_TOP = 4
+    SWITCH_BOTTOM = 3
 
-    RED = 10
-    YELLOW = 11
-    GREEN = 12
-    CONFETTI = 9
+    RED1 = 12
+    YELLOW1 = 11
+    GREEN1 = 10
+    RED2 = 9
+    YELLOW2 = 8
+    GREEN2 = 7
+    CONFETTI = 6
+    UNUSED = 5
 
 
 # fix an uncaught exception in pyfirmata2.Arduino.__del__
@@ -53,6 +57,9 @@ class FirmataGPIO:
             return
 
         print("Setting up inputs...")
+        # Turn on sampling once times per second, because otherwise 
+        # digital inputs are ignored.
+        self.board.samplingOn(1000)  
         self.inputs: Dict[ArduinoPin, FirmataPinWithValue] = {}
         for pin_id in [ArduinoPin.SWITCH_TOP, ArduinoPin.SWITCH_BOTTOM]:
             self.inputs[pin_id] = FirmataPinWithValue(
@@ -63,7 +70,7 @@ class FirmataGPIO:
                 else self._switch_bottom_callback
             )
             self.inputs[pin_id].firmata_pin.enable_reporting()
-
+        
         print("Setting up outputs...")
 
         # prepare relay board
@@ -71,7 +78,11 @@ class FirmataGPIO:
         self.relay_vcc.write(False)
 
         self.relays: Dict[ArduinoPin, FirmataPinWithValue] = {}
-        for pin_id in [ArduinoPin.RED, ArduinoPin.YELLOW, ArduinoPin.GREEN, ArduinoPin.CONFETTI]:
+        for pin_id in [
+            ArduinoPin.RED1, ArduinoPin.YELLOW1, ArduinoPin.GREEN1, 
+            ArduinoPin.RED2, ArduinoPin.YELLOW2, ArduinoPin.GREEN2, 
+            ArduinoPin.CONFETTI, ArduinoPin.UNUSED
+        ]:
             self.relays[pin_id] = FirmataPinWithValue(
                 firmata_pin=self.board.get_pin('d:%d:o' % pin_id.value)
             )
@@ -144,8 +155,8 @@ if __name__ == '__main__':
     try:
         while True:
             state = not state
-            gpio.set_relay(ArduinoPin.RED, state)
-            gpio.set_relay(ArduinoPin.GREEN, not state)
+            gpio.set_relay(ArduinoPin.RED1, state)
+            gpio.set_relay(ArduinoPin.RED2, not state)
             time.sleep(0.5)
     except KeyboardInterrupt:
         print('Closing...')
