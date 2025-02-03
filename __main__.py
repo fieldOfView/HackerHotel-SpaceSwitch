@@ -50,6 +50,36 @@ class App:
         # POST state to server
         print("Hacker Hotel state:", state)
 
+        # update relays via GPIO
+        if state == SpaceState.OPEN:
+            self.gpio.set_relay(ArduinoPin.RED1,    False)
+            self.gpio.set_relay(ArduinoPin.YELLOW1, False)
+            self.gpio.set_relay(ArduinoPin.GREEN1,  True)
+            self.gpio.set_relay(ArduinoPin.RED2,    False)
+            self.gpio.set_relay(ArduinoPin.YELLOW2, False)
+            self.gpio.set_relay(ArduinoPin.GREEN2,  True)
+            self.gpio.set_relay(ArduinoPin.CONFETTI, False)
+
+        elif state == SpaceState.UNDETERMINED:
+            self.gpio.set_relay(ArduinoPin.RED1,    False)
+            self.gpio.set_relay(ArduinoPin.YELLOW1, True)
+            self.gpio.set_relay(ArduinoPin.GREEN1,  False)
+            self.gpio.set_relay(ArduinoPin.RED2,    False)
+            self.gpio.set_relay(ArduinoPin.YELLOW2, True)
+            self.gpio.set_relay(ArduinoPin.GREEN2,  False)
+            self.gpio.set_relay(ArduinoPin.CONFETTI, False)
+
+        elif state == SpaceState.CLOSED:
+            self.gpio.set_relay(ArduinoPin.RED1,    True)
+            self.gpio.set_relay(ArduinoPin.YELLOW1, False)
+            self.gpio.set_relay(ArduinoPin.GREEN1,  False)
+            self.gpio.set_relay(ArduinoPin.RED2,    True)
+            self.gpio.set_relay(ArduinoPin.YELLOW2, False)
+            self.gpio.set_relay(ArduinoPin.GREEN2,  False)
+            self.gpio.set_relay(ArduinoPin.CONFETTI, False)
+
+        return
+
         try:
             requests.post(SPACESTATE_URL, json={
                 "API_key": API_KEY,
@@ -57,26 +87,6 @@ class App:
             })
         except Exception as e:
             print("Failed to POST state", e)
-
-
-        # update relays via GPIO
-        if state == SpaceState.OPEN:
-            self.gpio.set_relay(ArduinoPin.RED,    False)
-            self.gpio.set_relay(ArduinoPin.YELLOW, False)
-            self.gpio.set_relay(ArduinoPin.GREEN,  True)
-            self.gpio.set_relay(ArduinoPin.CONFETTI, True)
-
-        elif state == SpaceState.UNDETERMINED:
-            self.gpio.set_relay(ArduinoPin.RED,    False)
-            self.gpio.set_relay(ArduinoPin.YELLOW, True)
-            self.gpio.set_relay(ArduinoPin.GREEN,  False)
-            self.gpio.set_relay(ArduinoPin.CONFETTI, False)
-
-        elif state == SpaceState.CLOSED:
-            self.gpio.set_relay(ArduinoPin.RED,    True)
-            self.gpio.set_relay(ArduinoPin.YELLOW, False)
-            self.gpio.set_relay(ArduinoPin.GREEN,  False)
-            self.gpio.set_relay(ArduinoPin.CONFETTI, False)
 
 
     def update(self) -> None:
