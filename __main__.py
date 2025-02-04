@@ -3,7 +3,7 @@
 import pygame
 import requests
 import logging
-from typing import Tuple, Optional
+from typing import Tuple
 
 from hackerspaces import HackerSpacesNL, HH_NAME
 from gpio import FirmataGPIO, ArduinoPin
