@@ -2,6 +2,7 @@
 
 import pygame
 import requests
+import logging
 from typing import Tuple, Optional
 
 from hackerspaces import HackerSpacesNL, HH_NAME
@@ -16,6 +17,8 @@ NL_SCALE: Tuple[float, float] = (3.85422677912357, 4.353798024388546)
 
 class App:
     def __init__(self) -> None:
+        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
         pygame.init()
         pygame.mouse.set_visible(False)
         self.screen_width: int = 1080
@@ -50,7 +53,7 @@ class App:
 
     def _handle_gpio_state(self, state: SpaceState) -> None:
         # POST state to server
-        print("Hacker Hotel state:", state)
+        logging.info("Hacker Hotel state:", state)
 
         if state == SpaceState.UNDETERMINED:
             self.open_sfx.play()
@@ -93,7 +96,7 @@ class App:
                 "sstate": "true" if state == SpaceState.OPEN else "false"
             })
         except Exception as e:
-            print("Failed to POST state", e)
+            logging.error("Failed to POST state", e)
 
 
     def update(self) -> None:

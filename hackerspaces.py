@@ -1,4 +1,5 @@
 import requests
+import logging
 import time
 from typing import List, Dict, Any
 
@@ -31,7 +32,7 @@ class HackerSpacesNL:
             self._refresh_data()
 
     def _refresh_data(self) -> None:
-        print('Refreshing hsnl geojson data')
+        logging.info('Refreshing hsnl geojson data')
 
         data: Dict[str, Any] = {}
         try:
@@ -44,7 +45,7 @@ class HackerSpacesNL:
         self.spaces.clear()
 
         if not data:
-            print('Error fetching hsnl geojson data')
+            logging.error('Error fetching hsnl geojson data')
             return
 
         includes_hackerhotel: bool = False
@@ -66,17 +67,19 @@ class HackerSpacesNL:
 
                 self.spaces.append(HackerSpace(name, lat, lon, state))
             except Exception as e:
-                print(f'Error parsing feature: {feature}', e)
+                logging.error(f'Error parsing feature: {feature}', e)
 
         if not includes_hackerhotel:
-            print('Hacker Hotel not found in geojson data; adding manually')
+            logging.info('Hacker Hotel not found in geojson data; adding manually')
 
             self.spaces.append(HackerSpace(HH_NAME, HH_LAT, HH_LON, SpaceState.UNDETERMINED))
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
     hsnl: HackerSpacesNL = HackerSpacesNL()
     hsnl.update()
 
     for space in hsnl.spaces:
-        print(space.name, space.lat, space.lon, space.state)
+        logging.info(f"{space.name} - Lat: {space.lat}, Lon: {space.lon}, State: {space.state}")

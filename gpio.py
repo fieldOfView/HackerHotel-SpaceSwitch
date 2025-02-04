@@ -1,5 +1,7 @@
 import pyfirmata2
+import logging
 import time
+
 from enum import Enum
 from typing import Dict, Callable, Optional
 
@@ -49,17 +51,15 @@ class FirmataGPIO:
 
         self.state: SpaceState = SpaceState.UNDETERMINED
         self.board: Optional[pyfirmata2.Arduino] = None
-        print("Connecting to board...")
+        logging.info("Connecting to board...")
         try:
             self.board = pyfirmata2.Arduino(DEVICE)
         except Exception as e:
-            print(f"Failed to connect to device: {e}")
+            logging.error(f"Failed to connect to device: {e}")
             return
 
-        print("Setting up inputs...")
-        # Turn on sampling once times per second, because otherwise 
-        # digital inputs are ignored.
-        self.board.samplingOn(1000)  
+        logging.info("Setting up inputs...")
+        self.board.samplingOn(100)
         self.inputs: Dict[ArduinoPin, FirmataPinWithValue] = {}
         for pin_id in [ArduinoPin.SWITCH_TOP, ArduinoPin.SWITCH_BOTTOM]:
             self.inputs[pin_id] = FirmataPinWithValue(
@@ -70,8 +70,8 @@ class FirmataGPIO:
                 else self._switch_bottom_callback
             )
             self.inputs[pin_id].firmata_pin.enable_reporting()
-        
-        print("Setting up outputs...")
+
+        logging.info("Setting up outputs...")
 
         # prepare relay board
         self.relay_vcc: pyfirmata2.Pin = self.board.get_pin('d:%d:o' % ArduinoPin.RELAY_VCC.value)
@@ -79,8 +79,8 @@ class FirmataGPIO:
 
         self.relays: Dict[ArduinoPin, FirmataPinWithValue] = {}
         for pin_id in [
-            ArduinoPin.RED1, ArduinoPin.YELLOW1, ArduinoPin.GREEN1, 
-            ArduinoPin.RED2, ArduinoPin.YELLOW2, ArduinoPin.GREEN2, 
+            ArduinoPin.RED1, ArduinoPin.YELLOW1, ArduinoPin.GREEN1,
+            ArduinoPin.RED2, ArduinoPin.YELLOW2, ArduinoPin.GREEN2,
             ArduinoPin.CONFETTI, ArduinoPin.UNUSED
         ]:
             self.relays[pin_id] = FirmataPinWithValue(
@@ -109,7 +109,7 @@ class FirmataGPIO:
     def set_relay(self, pin: ArduinoPin, state: bool) -> None:
         if self.board is None or pin not in self.relays:
             return
-        
+
         self.relays[pin].firmata_pin.write(not state)  # NB: relays are active low
         self.relays[pin].value = state
 
@@ -125,19 +125,19 @@ class FirmataGPIO:
         last_state: SpaceState = self.state
 
         if self.board is None:
-            print("Board is not connected")
+            logging.warning("Board is not connected")
             self.state = SpaceState.UNDETERMINED
         elif self.inputs[ArduinoPin.SWITCH_TOP].value and self.inputs[ArduinoPin.SWITCH_BOTTOM].value:
-            print("Both open and closed contacts are connected. Weird...")
+            logging.warning("Both open and closed contacts are connected. Weird...")
             self.state = SpaceState.UNDETERMINED
         elif self.inputs[ArduinoPin.SWITCH_TOP].value:
-            print("Switch is set to 'open' state")
+            logging.debug("Switch is set to 'open' state")
             self.state = SpaceState.OPEN
         elif self.inputs[ArduinoPin.SWITCH_BOTTOM].value:
-            print("Switch is set to 'closed' state")
+            logging.debug("Switch is set to 'closed' state")
             self.state = SpaceState.CLOSED
         else:
-            print("Switch is somewhere in between")
+            logging.debug("Switch is somewhere in between")
             self.state = SpaceState.UNDETERMINED
 
         if self.state != last_state and self.spacestate_callback is not None:
@@ -145,8 +145,10 @@ class FirmataGPIO:
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
     def spacestate_callback(state: SpaceState):
-        print('Switch state changed to:', state)
+        logging.info('Switch state changed to:', state)
 
     gpio = FirmataGPIO(spacestate_callback)
 
@@ -163,5 +165,5 @@ if __name__ == '__main__':
             gpio.set_relay(ArduinoPin.YELLOW2, state)
             time.sleep(0.5)
     except KeyboardInterrupt:
-        print('Closing...')
+        logging.info('Closing...')
         gpio.close()
