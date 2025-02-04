@@ -34,6 +34,8 @@ class App:
         self.running: bool = True
 
         self.background_image: pygame.Surface = pygame.image.load("data/hsnl.png")
+        self.open_sfx: pygame.mixer.Sound = pygame.mixer.Sound("data/open.wav")
+        self.close_sfx: pygame.mixer.Sound = pygame.mixer.Sound("data/close.wav")
 
 
     def _handle_events(self) -> None:
@@ -49,6 +51,11 @@ class App:
     def _handle_gpio_state(self, state: SpaceState) -> None:
         # POST state to server
         print("Hacker Hotel state:", state)
+
+        if state == SpaceState.UNDETERMINED:
+            self.open_sfx.play()
+        else:
+            self.close_sfx.play()
 
         # update relays via GPIO
         if state == SpaceState.OPEN:
