@@ -36,6 +36,8 @@ class App:
 
         self.running: bool = True
 
+        self.show_spark = False
+
         self.background_image: pygame.Surface = pygame.image.load("data/hsnl.png")
         self.open_sfx: pygame.mixer.Sound = pygame.mixer.Sound("data/open.wav")
         self.close_sfx: pygame.mixer.Sound = pygame.mixer.Sound("data/close.wav")
@@ -53,7 +55,9 @@ class App:
 
     def _handle_gpio_state(self, state: SpaceState) -> None:
         # POST state to server
-        logging.info("Hacker Hotel state:", state)
+        logging.info(f"Hacker Hotel state: {state.name}")
+
+        self.show_spark = True
 
         if state == SpaceState.UNDETERMINED:
             self.open_sfx.play()
@@ -106,6 +110,11 @@ class App:
 
 
     def draw(self) -> None:
+        if self.show_spark:
+            self.screen.fill((255,255,255))
+            self.show_spark = False
+            return
+
         self.screen.fill((0, 0, 0))
         self.screen.blit(self.background_image, (0, 0))
 
