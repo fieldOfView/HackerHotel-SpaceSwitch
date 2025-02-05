@@ -1,15 +1,13 @@
 #!/home/hacker/HotelSwitch/venv/bin/python3
 
 import pygame
-import requests
 import logging
 
 from typing import Tuple
 
 from hackerspaces import HackerSpacesNL, HH_NAME
 from gpio import FirmataGPIO, LampColor
-from spacestate import SpaceState, SPACESTATE_URL
-from spacestatesecrets import API_KEY
+from spacestate import SpaceState, HackerHotelStateApi
 
 # empirical approximations to match the geo coordinates to the map
 NL_CENTER: Tuple[float, float] = (5.24791, 52.1372954)
@@ -32,8 +30,11 @@ class App:
 
         self.clock: pygame.time.Clock = pygame.time.Clock()
 
+        self.state: SpaceState = SpaceState.UNDETERMINED
+
         self.hsnl: HackerSpacesNL = HackerSpacesNL()
         self.gpio: FirmataGPIO = FirmataGPIO(self._handle_gpio_state)
+        self.space_api: HackerHotelStateApi = HackerHotelStateApi()
 
         self.running: bool = True
 
@@ -58,7 +59,8 @@ class App:
 
 
     def _handle_gpio_state(self, state: SpaceState) -> None:
-        # POST state to server
+        self.state = state
+
         logging.info(f"Hacker Hotel state: {state.name}")
 
         self.show_spark = True
@@ -80,13 +82,7 @@ class App:
 
         return
 
-        try:
-            requests.post(SPACESTATE_URL, json={
-                "API_key": API_KEY,
-                "sstate": "true" if state == SpaceState.OPEN else "false"
-            })
-        except Exception as e:
-            logging.error("Failed to POST state", e)
+        self.space_api.set_state(state)
 
 
     def update(self) -> None:
