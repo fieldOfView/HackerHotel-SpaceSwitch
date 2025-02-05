@@ -7,7 +7,7 @@ import logging
 from typing import Tuple
 
 from hackerspaces import HackerSpacesNL, HH_NAME
-from gpio import FirmataGPIO, ArduinoPin
+from gpio import FirmataGPIO, LampColor
 from spacestate import SpaceState, SPACESTATE_URL
 from spacestatesecrets import API_KEY
 
@@ -39,8 +39,6 @@ class App:
 
         self.show_spark: bool = False
 
-        self.confetti: bool = False
-
         self.background_image: pygame.Surface = pygame.image.load("data/hsnl.png")
         self.open_sfx: pygame.mixer.Sound = pygame.mixer.Sound("data/open.wav")
         self.close_sfx: pygame.mixer.Sound = pygame.mixer.Sound("data/close.wav")
@@ -56,8 +54,7 @@ class App:
             self.running = False
 
         if keys[pygame.K_c]:
-            self.confetti = not self.confetti
-            self.gpio.set_relay(ArduinoPin.CONFETTI, self.confetti)
+            self.gpio.fire_confetti()
 
 
     def _handle_gpio_state(self, state: SpaceState) -> None:
@@ -73,28 +70,13 @@ class App:
 
         # update relays via GPIO
         if state == SpaceState.OPEN:
-            self.gpio.set_relay(ArduinoPin.RED1,    False)
-            self.gpio.set_relay(ArduinoPin.ORANGE2, False)
-            self.gpio.set_relay(ArduinoPin.GREEN1,  True)
-            self.gpio.set_relay(ArduinoPin.RED2,    False)
-            self.gpio.set_relay(ArduinoPin.ORANGE2, False)
-            self.gpio.set_relay(ArduinoPin.GREEN2,  True)
+            self.gpio.set_color(LampColor.GREEN)
 
         elif state == SpaceState.UNDETERMINED:
-            self.gpio.set_relay(ArduinoPin.RED1,    False)
-            self.gpio.set_relay(ArduinoPin.ORANGE2, True)
-            self.gpio.set_relay(ArduinoPin.GREEN1,  False)
-            self.gpio.set_relay(ArduinoPin.RED2,    False)
-            self.gpio.set_relay(ArduinoPin.ORANGE2, True)
-            self.gpio.set_relay(ArduinoPin.GREEN2,  False)
+            self.gpio.set_color(LampColor.ORANGE)
 
         elif state == SpaceState.CLOSED:
-            self.gpio.set_relay(ArduinoPin.RED1,    True)
-            self.gpio.set_relay(ArduinoPin.ORANGE2, False)
-            self.gpio.set_relay(ArduinoPin.GREEN1,  False)
-            self.gpio.set_relay(ArduinoPin.RED2,    True)
-            self.gpio.set_relay(ArduinoPin.ORANGE2, False)
-            self.gpio.set_relay(ArduinoPin.GREEN2,  False)
+            self.gpio.set_color(LampColor.RED)
 
         return
 
