@@ -3,11 +3,15 @@ import logging
 import time
 
 from enum import Enum
+
 from typing import Dict, Callable, Optional
+
+from debounce import debounce
 
 from spacestate import SpaceState
 
-DEVICE = '/dev/ttyUSB0'
+DEVICE = pyfirmata2.Arduino.AUTODETECT
+#DEVICE = '/dev/ttyUSB0'
 
 
 class ArduinoPin(Enum):
@@ -39,12 +43,6 @@ pyfirmata2.Arduino.__del__ = pyfirmata2_del_fix
 pyfirmata2.Pin.unregister_callback = pyfirmata2.Pin.unregiser_callback
 
 
-class FirmataPinWithValue:
-    def __init__(self, firmata_pin: pyfirmata2.Pin, value: bool = False) -> None:
-        self.firmata_pin: pyfirmata2.Pin = firmata_pin
-        self.value: bool = value
-
-
 class FirmataGPIO:
     def __init__(self, spacestate_callback: Optional[Callable[[SpaceState], None]] = None) -> None:
         self.spacestate_callback: Optional[Callable[[SpaceState], None]] = spacestate_callback
@@ -60,16 +58,13 @@ class FirmataGPIO:
 
         logging.info("Setting up inputs...")
         self.board.samplingOn(100)
-        self.inputs: Dict[ArduinoPin, FirmataPinWithValue] = {}
+        self.inputs: Dict[ArduinoPin, pyfirmata2.Pin] = {}
         for pin_id in [ArduinoPin.SWITCH_TOP, ArduinoPin.SWITCH_BOTTOM]:
-            self.inputs[pin_id] = FirmataPinWithValue(
-                firmata_pin=self.board.get_pin('d:%d:i' % pin_id.value)
+            self.inputs[pin_id] = self.board.get_pin('d:%d:u' % pin_id.value)
+            self.inputs[pin_id].register_callback(
+                self._handle_gpio_input
             )
-            self.inputs[pin_id].firmata_pin.register_callback(
-                self._switch_top_callback if pin_id == ArduinoPin.SWITCH_TOP
-                else self._switch_bottom_callback
-            )
-            self.inputs[pin_id].firmata_pin.enable_reporting()
+            self.inputs[pin_id].enable_reporting()
 
         logging.info("Setting up outputs...")
 
@@ -77,15 +72,13 @@ class FirmataGPIO:
         self.relay_vcc: pyfirmata2.Pin = self.board.get_pin('d:%d:o' % ArduinoPin.RELAY_VCC.value)
         self.relay_vcc.write(False)
 
-        self.relays: Dict[ArduinoPin, FirmataPinWithValue] = {}
+        self.relays: Dict[ArduinoPin, pyfirmata2.Pin] = {}
         for pin_id in [
             ArduinoPin.RED1, ArduinoPin.YELLOW1, ArduinoPin.GREEN1,
             ArduinoPin.RED2, ArduinoPin.YELLOW2, ArduinoPin.GREEN2,
             ArduinoPin.CONFETTI, ArduinoPin.UNUSED
         ]:
-            self.relays[pin_id] = FirmataPinWithValue(
-                firmata_pin=self.board.get_pin('d:%d:o' % pin_id.value)
-            )
+            self.relays[pin_id] = self.board.get_pin('d:%d:o' % pin_id.value)
             self.set_relay(pin_id, False)
 
         # enable relays
@@ -96,8 +89,8 @@ class FirmataGPIO:
             return
 
         for input in self.inputs.values():
-            input.firmata_pin.disable_reporting()
-            input.firmata_pin.unregister_callback()
+            input.disable_reporting()
+            input.unregister_callback()
 
         for relay in self.relays.keys():
             self.set_relay(relay, False)
@@ -110,30 +103,28 @@ class FirmataGPIO:
         if self.board is None or pin not in self.relays:
             return
 
-        self.relays[pin].firmata_pin.write(not state)  # NB: relays are active low
-        self.relays[pin].value = state
+        self.relays[pin].write(not state)  # NB: relays are active low
 
-    def _switch_top_callback(self, data: bool) -> None:
-        self.inputs[ArduinoPin.SWITCH_TOP].value = not data
+    def _handle_gpio_input(self, data) -> None:
         self._update_switch_state()
 
-    def _switch_bottom_callback(self, data: bool) -> None:
-        self.inputs[ArduinoPin.SWITCH_BOTTOM].value = not data
-        self._update_switch_state()
-
+    @debounce(0.1)
     def _update_switch_state(self) -> None:
         last_state: SpaceState = self.state
+
+        top_switch_value = not self.inputs[ArduinoPin.SWITCH_TOP].value
+        bottom_switch_value = not self.inputs[ArduinoPin.SWITCH_BOTTOM].value
 
         if self.board is None:
             logging.warning("Board is not connected")
             self.state = SpaceState.UNDETERMINED
-        elif self.inputs[ArduinoPin.SWITCH_TOP].value and self.inputs[ArduinoPin.SWITCH_BOTTOM].value:
+        elif top_switch_value and bottom_switch_value:
             logging.warning("Both open and closed contacts are connected. Weird...")
             self.state = SpaceState.UNDETERMINED
-        elif self.inputs[ArduinoPin.SWITCH_TOP].value:
+        elif top_switch_value:
             logging.debug("Switch is set to 'open' state")
             self.state = SpaceState.OPEN
-        elif self.inputs[ArduinoPin.SWITCH_BOTTOM].value:
+        elif bottom_switch_value:
             logging.debug("Switch is set to 'closed' state")
             self.state = SpaceState.CLOSED
         else:
@@ -148,7 +139,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
     def spacestate_callback(state: SpaceState):
-        logging.info('Switch state changed to:', state)
+        logging.info(f'Switch state changed to: {state.name}')
 
     gpio = FirmataGPIO(spacestate_callback)
 
