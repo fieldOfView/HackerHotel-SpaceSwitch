@@ -10,10 +10,10 @@ def debounce(wait):
             def call_it():
                 fn(*args, **kwargs)
             try:
-                debounced.t.cancel()
+                debounced.timer.cancel()
             except(AttributeError):
                 pass
-            debounced.t = Timer(wait, call_it)
-            debounced.t.start()
+            debounced.timer = Timer(wait, call_it)
+            debounced.timer.start()
         return debounced
     return decorator
