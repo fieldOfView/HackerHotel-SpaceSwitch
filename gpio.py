@@ -17,17 +17,17 @@ DEVICE = pyfirmata2.Arduino.AUTODETECT
 class ArduinoPin(Enum):
     RELAY_VCC = 13
 
-    SWITCH_TOP = 3
-    SWITCH_BOTTOM = 4
+    SWITCH_TOP = 2
+    SWITCH_BOTTOM = 3
 
     RED1 = 12
     YELLOW1 = 11
     GREEN1 = 10
     RED2 = 9
-    YELLOW2 = 8
-    GREEN2 = 7
-    CONFETTI = 6
-    UNUSED = 5
+    YELLOW2 = 7
+    GREEN2 = 6
+    CONFETTI = 5
+    UNUSED = 4
 
 
 # fix an uncaught exception in pyfirmata2.Arduino.__del__
@@ -47,7 +47,6 @@ class FirmataGPIO:
     def __init__(self, spacestate_callback: Optional[Callable[[SpaceState], None]] = None) -> None:
         self.spacestate_callback: Optional[Callable[[SpaceState], None]] = spacestate_callback
 
-        self.state: SpaceState = SpaceState.UNDETERMINED
         self.board: Optional[pyfirmata2.Arduino] = None
         logging.info("Connecting to board...")
         try:
@@ -60,7 +59,7 @@ class FirmataGPIO:
         self.board.samplingOn(100)
         self.inputs: Dict[ArduinoPin, pyfirmata2.Pin] = {}
         for pin_id in [ArduinoPin.SWITCH_TOP, ArduinoPin.SWITCH_BOTTOM]:
-            self.inputs[pin_id] = self.board.get_pin('d:%d:u' % pin_id.value)
+            self.inputs[pin_id] = self.board.get_pin('d:%d:i' % pin_id.value)
             self.inputs[pin_id].register_callback(
                 self._handle_gpio_input
             )
@@ -83,6 +82,9 @@ class FirmataGPIO:
 
         # enable relays
         self.relay_vcc.write(True)
+
+        self.state: Optional[SpaceState] = None
+        self._update_switch_state()
 
     def close(self) -> None:
         if self.board is None:
@@ -140,21 +142,35 @@ if __name__ == '__main__':
 
     def spacestate_callback(state: SpaceState):
         logging.info(f'Switch state changed to: {state.name}')
+        if state==SpaceState.CLOSED:
+            gpio.set_relay(ArduinoPin.RED1, True)
+            gpio.set_relay(ArduinoPin.YELLOW1, False)
+            gpio.set_relay(ArduinoPin.GREEN1, False)
+            gpio.set_relay(ArduinoPin.RED2, True)
+            gpio.set_relay(ArduinoPin.YELLOW2, False)
+            gpio.set_relay(ArduinoPin.GREEN2, False)
+        elif state==SpaceState.UNDETERMINED:
+            gpio.set_relay(ArduinoPin.RED1, False)
+            gpio.set_relay(ArduinoPin.YELLOW1, True)
+            gpio.set_relay(ArduinoPin.GREEN1, False)
+            gpio.set_relay(ArduinoPin.RED2, False)
+            gpio.set_relay(ArduinoPin.YELLOW2, True)
+            gpio.set_relay(ArduinoPin.GREEN2, False)
+        elif state==SpaceState.OPEN:
+            gpio.set_relay(ArduinoPin.RED1, False)
+            gpio.set_relay(ArduinoPin.YELLOW1, False)
+            gpio.set_relay(ArduinoPin.GREEN1, True)
+            gpio.set_relay(ArduinoPin.RED2, False)
+            gpio.set_relay(ArduinoPin.YELLOW2, False)
+            gpio.set_relay(ArduinoPin.GREEN2, True)
+
 
     gpio = FirmataGPIO(spacestate_callback)
 
-    state: bool = False
-
     try:
         while True:
-            state = not state
-            gpio.set_relay(ArduinoPin.RED1, state)
-            gpio.set_relay(ArduinoPin.RED2, state)
-            gpio.set_relay(ArduinoPin.GREEN1, state)
-            gpio.set_relay(ArduinoPin.GREEN2, state)
-            gpio.set_relay(ArduinoPin.YELLOW1, state)
-            gpio.set_relay(ArduinoPin.YELLOW2, state)
             time.sleep(0.5)
+
     except KeyboardInterrupt:
         logging.info('Closing...')
         gpio.close()
