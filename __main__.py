@@ -3,6 +3,7 @@
 import pygame
 import requests
 import logging
+
 from typing import Tuple
 
 from hackerspaces import HackerSpacesNL, HH_NAME
@@ -36,7 +37,9 @@ class App:
 
         self.running: bool = True
 
-        self.show_spark = False
+        self.show_spark: bool = False
+
+        self.confetti: bool = False
 
         self.background_image: pygame.Surface = pygame.image.load("data/hsnl.png")
         self.open_sfx: pygame.mixer.Sound = pygame.mixer.Sound("data/open.wav")
@@ -51,6 +54,10 @@ class App:
         keys = pygame.key.get_pressed()
         if keys[pygame.K_ESCAPE] or keys[pygame.K_q]:
             self.running = False
+
+        if keys[pygame.K_c]:
+            self.confetti = not self.confetti
+            self.gpio.set_relay(ArduinoPin.CONFETTI, self.confetti)
 
 
     def _handle_gpio_state(self, state: SpaceState) -> None:
@@ -67,30 +74,27 @@ class App:
         # update relays via GPIO
         if state == SpaceState.OPEN:
             self.gpio.set_relay(ArduinoPin.RED1,    False)
-            self.gpio.set_relay(ArduinoPin.YELLOW1, False)
+            self.gpio.set_relay(ArduinoPin.ORANGE2, False)
             self.gpio.set_relay(ArduinoPin.GREEN1,  True)
             self.gpio.set_relay(ArduinoPin.RED2,    False)
-            self.gpio.set_relay(ArduinoPin.YELLOW2, False)
+            self.gpio.set_relay(ArduinoPin.ORANGE2, False)
             self.gpio.set_relay(ArduinoPin.GREEN2,  True)
-            self.gpio.set_relay(ArduinoPin.CONFETTI, False)
 
         elif state == SpaceState.UNDETERMINED:
             self.gpio.set_relay(ArduinoPin.RED1,    False)
-            self.gpio.set_relay(ArduinoPin.YELLOW1, True)
+            self.gpio.set_relay(ArduinoPin.ORANGE2, True)
             self.gpio.set_relay(ArduinoPin.GREEN1,  False)
             self.gpio.set_relay(ArduinoPin.RED2,    False)
-            self.gpio.set_relay(ArduinoPin.YELLOW2, True)
+            self.gpio.set_relay(ArduinoPin.ORANGE2, True)
             self.gpio.set_relay(ArduinoPin.GREEN2,  False)
-            self.gpio.set_relay(ArduinoPin.CONFETTI, False)
 
         elif state == SpaceState.CLOSED:
             self.gpio.set_relay(ArduinoPin.RED1,    True)
-            self.gpio.set_relay(ArduinoPin.YELLOW1, False)
+            self.gpio.set_relay(ArduinoPin.ORANGE2, False)
             self.gpio.set_relay(ArduinoPin.GREEN1,  False)
             self.gpio.set_relay(ArduinoPin.RED2,    True)
-            self.gpio.set_relay(ArduinoPin.YELLOW2, False)
+            self.gpio.set_relay(ArduinoPin.ORANGE2, False)
             self.gpio.set_relay(ArduinoPin.GREEN2,  False)
-            self.gpio.set_relay(ArduinoPin.CONFETTI, False)
 
         return
 
@@ -124,9 +128,12 @@ class App:
             x: int = screen_center[0] + int((space.lon - NL_CENTER[0]) / NL_SCALE[0] * self.screen_width)
             y: int = screen_center[1] - int((space.lat - NL_CENTER[1]) / NL_SCALE[1] * self.screen_height)
 
+            radius = 8
+
             state: SpaceState = space.state
             if space.name == HH_NAME:
                 state = self.gpio.state
+                radius = 16
 
             if state == SpaceState.OPEN:
                 color: Tuple[int, int, int] = (0, 255, 0)
@@ -139,7 +146,7 @@ class App:
                 self.screen,
                 color,
                 (x, y),
-                8
+                radius
             )
 
 

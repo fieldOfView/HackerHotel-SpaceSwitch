@@ -21,10 +21,10 @@ class ArduinoPin(Enum):
     SWITCH_BOTTOM = 3
 
     RED1 = 12
-    YELLOW1 = 11
+    ORANGE2 = 11
     GREEN1 = 10
     RED2 = 9
-    YELLOW2 = 7
+    ORANGE2 = 7
     GREEN2 = 6
     CONFETTI = 5
     UNUSED = 4
@@ -73,8 +73,8 @@ class FirmataGPIO:
 
         self.relays: Dict[ArduinoPin, pyfirmata2.Pin] = {}
         for pin_id in [
-            ArduinoPin.RED1, ArduinoPin.YELLOW1, ArduinoPin.GREEN1,
-            ArduinoPin.RED2, ArduinoPin.YELLOW2, ArduinoPin.GREEN2,
+            ArduinoPin.RED1, ArduinoPin.ORANGE2, ArduinoPin.GREEN1,
+            ArduinoPin.RED2, ArduinoPin.ORANGE2, ArduinoPin.GREEN2,
             ArduinoPin.CONFETTI, ArduinoPin.UNUSED
         ]:
             self.relays[pin_id] = self.board.get_pin('d:%d:o' % pin_id.value)
@@ -144,24 +144,24 @@ if __name__ == '__main__':
         logging.info(f'Switch state changed to: {state.name}')
         if state==SpaceState.CLOSED:
             gpio.set_relay(ArduinoPin.RED1, True)
-            gpio.set_relay(ArduinoPin.YELLOW1, False)
+            gpio.set_relay(ArduinoPin.ORANGE2, False)
             gpio.set_relay(ArduinoPin.GREEN1, False)
             gpio.set_relay(ArduinoPin.RED2, True)
-            gpio.set_relay(ArduinoPin.YELLOW2, False)
+            gpio.set_relay(ArduinoPin.ORANGE2, False)
             gpio.set_relay(ArduinoPin.GREEN2, False)
         elif state==SpaceState.UNDETERMINED:
             gpio.set_relay(ArduinoPin.RED1, False)
-            gpio.set_relay(ArduinoPin.YELLOW1, True)
+            gpio.set_relay(ArduinoPin.ORANGE2, True)
             gpio.set_relay(ArduinoPin.GREEN1, False)
             gpio.set_relay(ArduinoPin.RED2, False)
-            gpio.set_relay(ArduinoPin.YELLOW2, True)
+            gpio.set_relay(ArduinoPin.ORANGE2, True)
             gpio.set_relay(ArduinoPin.GREEN2, False)
         elif state==SpaceState.OPEN:
             gpio.set_relay(ArduinoPin.RED1, False)
-            gpio.set_relay(ArduinoPin.YELLOW1, False)
+            gpio.set_relay(ArduinoPin.ORANGE2, False)
             gpio.set_relay(ArduinoPin.GREEN1, True)
             gpio.set_relay(ArduinoPin.RED2, False)
-            gpio.set_relay(ArduinoPin.YELLOW2, False)
+            gpio.set_relay(ArduinoPin.ORANGE2, False)
             gpio.set_relay(ArduinoPin.GREEN2, True)
 
 
