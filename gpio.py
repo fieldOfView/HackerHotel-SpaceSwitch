@@ -56,6 +56,8 @@ class FirmataGPIO:
     def __init__(self, spacestate_callback: Optional[Callable[[SpaceState], None]] = None) -> None:
         self.spacestate_callback: Optional[Callable[[SpaceState], None]] = spacestate_callback
 
+        self.state: Optional[SpaceState] = None
+
         self._confetti_timer: Optional[Timer] = None
 
         self._board: Optional[pyfirmata2.Arduino] = None
@@ -94,12 +96,13 @@ class FirmataGPIO:
         # enable relays
         self._relay_vcc.write(True)
 
-        self.state: Optional[SpaceState] = None
         self._update_switch_state()
 
     def close(self) -> None:
         if self._board is None:
             return
+
+        logging.info("Closing GPIO...")
 
         for input in self._inputs.values():
             input.disable_reporting()
@@ -154,15 +157,15 @@ class FirmataGPIO:
 
         self.set_relay(ArduinoPin.RED1, red)
         self.set_relay(ArduinoPin.RED2, red)
-        self.set_relay(ArduinoPin.ORANGE1, orange)        
+        self.set_relay(ArduinoPin.ORANGE1, orange)
         self.set_relay(ArduinoPin.ORANGE2, orange)
-        self.set_relay(ArduinoPin.GREEN2, green)        
         self.set_relay(ArduinoPin.GREEN1, green)
+        self.set_relay(ArduinoPin.GREEN2, green)
 
     def fire_confetti(self) -> None:
         if self._confetti_timer is not None:
             return
-        
+
         logging.info("Firing confetti canons")
         self._confetti_timer = Timer(
             2, self._reset_confetti
@@ -172,7 +175,7 @@ class FirmataGPIO:
 
     def _reset_confetti(self) -> None:
         logging.debug("Resetting confetti canon relays")
-        
+
         self._confetti_timer = None
         self.set_relay(ArduinoPin.CONFETTI, False)
 

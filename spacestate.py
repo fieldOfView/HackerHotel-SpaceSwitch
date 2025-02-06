@@ -14,7 +14,7 @@ class SpaceState(Enum):
     OPEN = 2
 
 
-class _StatePostThread(Thread):
+class _PostStateThread(Thread):
     def __init__(self, spacestate: str) -> None:
         super().__init__()
         self._spacestate = spacestate
@@ -54,7 +54,7 @@ class HackerHotelStateApi():
 
         spacestate: str = "true" if self.state == SpaceState.OPEN else "false"
 
-        post_thread = _StatePostThread(spacestate)
+        post_thread = _PostStateThread(spacestate)
         post_thread.start()
 
 

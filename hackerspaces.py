@@ -1,12 +1,14 @@
 import requests
+from threading import Thread, Lock, Event
 import logging
+import copy
 import time
 from typing import List, Dict, Any
 
 from spacestate import SpaceState
 
 GEOJSON_URL: str = 'https://hackerspaces.nl/hsmap/hsnl.geojson'
-REFRESH_PERIOD: int = 120  # seconds
+REFRESH_PERIOD: int = 60  # seconds
 
 HH_LAT: float = 52.2208671
 HH_LON: float = 5.7208085
@@ -19,29 +21,72 @@ class HackerSpace:
         self.lon: float = lon
         self.state: SpaceState = state
 
+
+class _GetDataThread(Thread):
+    def __init__(self) -> None:
+        super().__init__()
+
+        self._data_event: Event = Event()
+        self._data_lock: Lock = Lock()
+        self._stop_event: Event = Event()
+        self._last_refresh: float = 0
+
+        self._data: Dict[str, Any] = {}
+
+    def run(self) -> None:
+        while not self._stop_event.is_set():
+            current_time: float = time.monotonic()
+            if current_time - self._last_refresh > REFRESH_PERIOD:
+                logging.info('Refreshing hsnl geojson data')
+
+                with self._data_lock:
+                    try:
+                        self._data = requests.get(GEOJSON_URL).json()
+                    except Exception as e:
+                        self._data.clear()
+                self._last_refresh: float = time.monotonic()
+                self._data_event.set()
+
+            time.sleep(0.5)
+
+    def stop(self) -> None:
+        self._stop_event.set()
+
+    def has_data(self) -> None:
+        if(self._data_event.is_set()):
+            self._data_event.clear()
+            return True
+
+        return False
+
+    def get_data(self) -> Dict[str, Any]:
+        with self._data_lock:
+            return copy.deepcopy(self._data)
+
+
 class HackerSpacesNL:
     def __init__(self):
         self.spaces: List[HackerSpace] = []
 
-        self._last_refresh: float = 0
+        self._data_thread = _GetDataThread()
+        self._data_thread.start()
+
+    def stop(self) -> None:
+        logging.debug("Stopping hsnl updates")
+        self._data_thread.stop()
+        self._data_thread.join()
 
 
-    def update(self) -> None:
-        current_time: float = time.monotonic()
-        if current_time - self._last_refresh > REFRESH_PERIOD:
-            self._refresh_data()
+    def update(self, wait: bool=False) -> None:
+        if wait:
+            logging.debug("Waiting for data to be fetched")
+            while not self._data_thread.has_data():
+                time.sleep(0.5)
+        else:
+            if not self._data_thread.has_data():
+                return
 
-    def _refresh_data(self) -> None:
-        logging.info('Refreshing hsnl geojson data')
-
-        data: Dict[str, Any] = {}
-        try:
-            data = requests.get(GEOJSON_URL).json()
-        except Exception as e:
-            pass
-
-        self._last_refresh: float = time.monotonic()
-
+        data = self._data_thread.get_data()
         self.spaces.clear()
 
         if not data:
@@ -76,10 +121,11 @@ class HackerSpacesNL:
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
     hsnl: HackerSpacesNL = HackerSpacesNL()
-    hsnl.update()
+    hsnl.update(wait=True)
+    hsnl.stop()
 
     for space in hsnl.spaces:
         logging.info(f"{space.name} - Lat: {space.lat}, Lon: {space.lon}, State: {space.state}")

@@ -129,15 +129,19 @@ class App:
 
 
     def run(self) -> None:
-        while self.running:
-            self.update()
-            self.draw()
-            pygame.display.flip()
+        try:
+            while self.running:
+                self.update()
+                self.draw()
+                pygame.display.flip()
 
-            self.clock.tick(60)
+                self.clock.tick(60)
+        except KeyboardInterrupt:
+            pass
 
         # cleanup
         self.gpio.close()
+        self.hsnl.stop()
 
 
 if __name__ == "__main__":
