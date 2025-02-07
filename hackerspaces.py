@@ -10,9 +10,11 @@ from spacestate import SpaceState
 GEOJSON_URL: str = 'https://hackerspaces.nl/hsmap/hsnl.geojson'
 REFRESH_PERIOD: int = 60  # seconds
 
-HH_LAT: float = 52.2208671
-HH_LON: float = 5.7208085
+# default HackerHotel entry
 HH_NAME: str = "Hacker Hotel"
+HH_LATITUDE: float = 52.2208671
+HH_LONGITUDE: float = 5.7208085
+
 
 class HackerSpace:
     def __init__(self, name: str, lat: float, lon: float, state: SpaceState):
@@ -43,6 +45,7 @@ class _GetDataThread(Thread):
                     try:
                         self._data = requests.get(GEOJSON_URL).json()
                     except Exception as e:
+                        logging.error('Error fetching hsnl geojson data')
                         self._data.clear()
                 self._last_refresh: float = time.monotonic()
                 self._data_event.set()
@@ -71,6 +74,8 @@ class HackerSpacesNL:
         self._data_thread = _GetDataThread()
         self._data_thread.start()
 
+        self._data: Dict[str, Any] = None
+
     def stop(self) -> None:
         logging.debug("Stopping hsnl updates")
         self._data_thread.stop()
@@ -78,6 +83,16 @@ class HackerSpacesNL:
 
 
     def update(self, wait: bool=False) -> None:
+        """
+            Check if the data-thread has received data, and see if it needs to be
+            processed. Typically this would be called periodically, but with the
+            `wait` argument you can also use it synchronously.
+
+            Args:
+                wait (bool): When set, the update call blocks until data is
+                    available. Otherwise the update returns immediately if data
+                    is not (yet) available.
+        """
         if wait:
             logging.debug("Waiting for data to be fetched")
             while not self._data_thread.has_data():
@@ -87,37 +102,49 @@ class HackerSpacesNL:
                 return
 
         data = self._data_thread.get_data()
-        self.spaces.clear()
 
-        if not data:
-            logging.error('Error fetching hsnl geojson data')
+        if data == self._data:
             return
+
+        self._process(data)
+        self._data = data
+
+    def _process(self, data: Dict[str, Any]):
+        """
+            Processes the geojson data received from the Hackerspaces.nl API.
+            The result populates self.spaces: List[HackerSpaces]
+
+            Args:
+                data (json): The geojson data returned from the API
+        """
+        self.spaces.clear()
 
         includes_hackerhotel: bool = False
 
-        for feature in data['features']:
-            try:
-                name: str = feature['properties']['name']
-                lat: float = float(feature['geometry']['coordinates'][1])
-                lon: float = float(feature['geometry']['coordinates'][0])
+        if 'features' in data:
+            for feature in data['features']:
+                try:
+                    name: str = feature['properties']['name']
+                    lat: float = float(feature['geometry']['coordinates'][1])
+                    lon: float = float(feature['geometry']['coordinates'][0])
 
-                state: SpaceState = SpaceState.UNDETERMINED
-                if feature['properties']['marker-symbol'] == '/hsmap/hs_open.png':
-                    state = SpaceState.OPEN
-                elif feature['properties']['marker-symbol'] == '/hsmap/hs_closed.png':
-                    state = SpaceState.CLOSED
+                    state: SpaceState = SpaceState.UNDETERMINED
+                    if feature['properties']['marker-symbol'] == '/hsmap/hs_open.png':
+                        state = SpaceState.OPEN
+                    elif feature['properties']['marker-symbol'] == '/hsmap/hs_closed.png':
+                        state = SpaceState.CLOSED
 
-                if name == "Hacker Hotel":
-                    includes_hackerhotel: bool = True
+                    if name == "Hacker Hotel":
+                        includes_hackerhotel: bool = True
 
-                self.spaces.append(HackerSpace(name, lat, lon, state))
-            except Exception as e:
-                logging.error(f'Error parsing feature: {feature}', e)
+                    self.spaces.append(HackerSpace(name, lat, lon, state))
+                except Exception as e:
+                    logging.error(f'Error parsing feature: {feature}', e)
 
         if not includes_hackerhotel:
             logging.info('Hacker Hotel not found in geojson data; adding manually')
 
-            self.spaces.append(HackerSpace(HH_NAME, HH_LAT, HH_LON, SpaceState.UNDETERMINED))
+            self.spaces.append(HackerSpace(HH_NAME, HH_LATITUDE, HH_LONGITUDE, SpaceState.UNDETERMINED))
 
 
 if __name__ == '__main__':
