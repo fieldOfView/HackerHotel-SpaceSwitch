@@ -11,7 +11,7 @@ GEOJSON_URL: str = 'https://hackerspaces.nl/hsmap/hsnl.geojson'
 REFRESH_PERIOD: int = 60  # seconds
 
 # default HackerHotel entry
-HH_NAME: str = "Hacker Hotel"
+HH_NAME: str = 'Hacker Hotel'
 HH_LATITUDE: float = 52.2208671
 HH_LONGITUDE: float = 5.7208085
 
@@ -77,7 +77,7 @@ class HackerSpacesNL:
         self._data: Dict[str, Any] = None
 
     def stop(self) -> None:
-        logging.debug("Stopping hsnl updates")
+        logging.debug('Stopping hsnl updates')
         self._data_thread.stop()
         self._data_thread.join()
 
@@ -94,7 +94,7 @@ class HackerSpacesNL:
                     is not (yet) available.
         """
         if wait:
-            logging.debug("Waiting for data to be fetched")
+            logging.debug('Waiting for data to be fetched')
             while not self._data_thread.has_data():
                 time.sleep(0.5)
         else:
@@ -134,7 +134,7 @@ class HackerSpacesNL:
                     elif feature['properties']['marker-symbol'] == '/hsmap/hs_closed.png':
                         state = SpaceState.CLOSED
 
-                    if name == "Hacker Hotel":
+                    if name == HH_NAME:
                         includes_hackerhotel: bool = True
 
                     self.spaces.append(HackerSpace(name, lat, lon, state))
@@ -155,4 +155,4 @@ if __name__ == '__main__':
     hsnl.stop()
 
     for space in hsnl.spaces:
-        logging.info(f"{space.name} - Lat: {space.lat}, Lon: {space.lon}, State: {space.state}")
+        logging.info(f'{space.name} - Lat: {space.lat}, Lon: {space.lon}, State: {space.state}')

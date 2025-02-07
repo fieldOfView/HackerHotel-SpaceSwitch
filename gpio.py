@@ -61,14 +61,14 @@ class FirmataGPIO:
         self._confetti_timer: Optional[Timer] = None
 
         self._board: Optional[pyfirmata2.Arduino] = None
-        logging.info("Connecting to board...")
+        logging.info('Connecting to board...')
         try:
             self._board = pyfirmata2.Arduino(DEVICE)
         except Exception as e:
-            logging.error(f"Failed to connect to device: {e}")
+            logging.error(f'Failed to connect to device: {e}')
             return
 
-        logging.info("Setting up inputs...")
+        logging.info('Setting up inputs...')
         self._board.samplingOn(100)
         self._inputs: Dict[ArduinoPin, pyfirmata2.Pin] = {}
         for pin_id in [ArduinoPin.SWITCH_TOP, ArduinoPin.SWITCH_BOTTOM]:
@@ -78,7 +78,7 @@ class FirmataGPIO:
             )
             self._inputs[pin_id].enable_reporting()
 
-        logging.info("Setting up outputs...")
+        logging.info('Setting up outputs...')
 
         # prepare relay board
         self._relay_vcc: pyfirmata2.Pin = self._board.get_pin('d:%d:o' % ArduinoPin.RELAY_VCC.value)
@@ -102,7 +102,7 @@ class FirmataGPIO:
         if self._board is None:
             return
 
-        logging.info("Closing GPIO...")
+        logging.info('Closing GPIO...')
 
         for input in self._inputs.values():
             input.disable_reporting()
@@ -132,19 +132,19 @@ class FirmataGPIO:
         bottom_switch_value = not self._inputs[ArduinoPin.SWITCH_BOTTOM].value
 
         if self._board is None:
-            logging.warning("Board is not connected")
+            logging.warning('Board is not connected')
             self.state = SpaceState.UNDETERMINED
         elif top_switch_value and bottom_switch_value:
-            logging.warning("Both open and closed contacts are connected. Weird...")
+            logging.warning('Both open and closed contacts are connected. Weird...')
             self.state = SpaceState.UNDETERMINED
         elif top_switch_value:
-            logging.debug("Switch is set to 'open' state")
+            logging.debug('Switch is set to \'open\' state')
             self.state = SpaceState.OPEN
         elif bottom_switch_value:
-            logging.debug("Switch is set to 'closed' state")
+            logging.debug('Switch is set to \'closed\' state')
             self.state = SpaceState.CLOSED
         else:
-            logging.debug("Switch is somewhere in between")
+            logging.debug('Switch is somewhere in between')
             self.state = SpaceState.UNDETERMINED
 
         if self.state != last_state and self.spacestate_callback is not None:
@@ -166,7 +166,7 @@ class FirmataGPIO:
         if self._confetti_timer is not None:
             return
 
-        logging.info("Firing confetti canons")
+        logging.info('Firing confetti canons')
         self._confetti_timer = Timer(
             2, self._reset_confetti
         )
@@ -174,7 +174,7 @@ class FirmataGPIO:
         self.set_relay(ArduinoPin.CONFETTI, True)
 
     def _reset_confetti(self) -> None:
-        logging.debug("Resetting confetti canon relays")
+        logging.debug('Resetting confetti canon relays')
 
         self._confetti_timer = None
         self.set_relay(ArduinoPin.CONFETTI, False)

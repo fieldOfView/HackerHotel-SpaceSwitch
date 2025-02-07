@@ -19,28 +19,28 @@ class SpaceState(Enum):
 class _PostStateThread(Thread):
     def __init__(self, state: SpaceState) -> None:
         super().__init__()
-        self._space_open: str = "true" if state == SpaceState.OPEN else "false"
+        self._space_open: str = 'true' if state == SpaceState.OPEN else 'false'
 
     def run(self) -> None:
-        logging.debug(f"POST state '{self._space_open}' to {SPACESTATE_URL}")
+        logging.debug(f'POST state \'{self._space_open}\' to {SPACESTATE_URL}')
         try:
             response = requests.post(SPACESTATE_URL, json={
-                "API_key": API_KEY,
-                "sstate": self._space_open
+                'API_key': API_KEY,
+                'sstate': self._space_open
             })
         except Exception as e:
-            logging.error(f"Error posting state: {str(e)}")
+            logging.error(f'Error posting state: {str(e)}')
             return
 
         if response.status_code != 200:
-            logging.error(f"Got a non-ok return code while posting state: {response.status_code}")
+            logging.error(f'Got a non-ok return code while posting state: {response.status_code}')
             return
 
-        if "Wrong key" in response.text:
-            logging.warning("Wrong key for posting state")
+        if 'Wrong key' in response.text:
+            logging.warning('Wrong key for posting state')
             return
 
-        logging.debug("State post success")
+        logging.debug('State post success')
 
 
 class HackerHotelStateApi():
@@ -50,9 +50,9 @@ class HackerHotelStateApi():
     @debounce(1)
     def set_state(self, state: SpaceState) -> None:
         if (state == self.state):
-            logging.debug(f"State was already set to {state.name}")
+            logging.debug(f'State was already set to {state.name}')
             return
-        logging.info(f"Setting HackerHotel state to {state.name}")
+        logging.info(f'Setting HackerHotel state to {state.name}')
         self.state = state
 
         post_thread = _PostStateThread(state)
@@ -64,17 +64,17 @@ if __name__ == '__main__':
 
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
-    logging.debug("Setting state")
+    logging.debug('Setting state')
     api = HackerHotelStateApi()
     api.set_state(SpaceState.OPEN) # This one gets eaten by the debounce
     time.sleep(.25)
     api.set_state(SpaceState.CLOSED)
-    logging.debug("Set to closed")
+    logging.debug('Set to closed')
 
     time.sleep(5)
     api.set_state(SpaceState.OPEN)
-    logging.debug("Set to open")
+    logging.debug('Set to open')
 
-    logging.debug("Starting loop, press Ctrl-C to end")
+    logging.debug('Starting loop, press Ctrl-C to end')
     while True:
         time.sleep(1)

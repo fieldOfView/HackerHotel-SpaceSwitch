@@ -34,7 +34,7 @@ class App:
             (self.screen_width, self.screen_height),
             flags=pygame.FULLSCREEN
         )
-        pygame.display.set_caption("HotelSwitch")
+        pygame.display.set_caption('HotelSwitch')
 
         self.clock: pygame.time.Clock = pygame.time.Clock()
 
@@ -48,9 +48,9 @@ class App:
 
         self.show_spark: bool = False
 
-        self.background_image: pygame.Surface = pygame.image.load("data/hsnl.png")
-        self.open_sfx: pygame.mixer.Sound = pygame.mixer.Sound("data/open.wav")
-        self.close_sfx: pygame.mixer.Sound = pygame.mixer.Sound("data/close.wav")
+        self.background_image: pygame.Surface = pygame.image.load('data/hsnl.png')
+        self.open_sfx: pygame.mixer.Sound = pygame.mixer.Sound('data/open.wav')
+        self.close_sfx: pygame.mixer.Sound = pygame.mixer.Sound('data/close.wav')
 
 
     def _handle_events(self) -> None:
@@ -69,7 +69,7 @@ class App:
     def _handle_gpio_state(self, state: SpaceState) -> None:
         self.state = state
 
-        logging.info(f"Hacker Hotel state: {state.name}")
+        logging.info(f'Hacker Hotel state: {state.name}')
 
         self.show_spark = True
 
@@ -152,6 +152,6 @@ class App:
         self.hsnl.stop()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     app: App = App()
     app.run()
