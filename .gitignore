@@ -4,5 +4,8 @@ __pycache__/
 # Virtual environment
 venv/
 
+# Logs
+logs/
+
 # Secrets
 spacestatesecrets.py

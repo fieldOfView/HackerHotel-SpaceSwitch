@@ -2,6 +2,7 @@
 
 import pygame
 import logging
+from logging.handlers import RotatingFileHandler
 
 from typing import Tuple
 
@@ -16,7 +17,14 @@ NL_SCALE: Tuple[float, float] = (3.85422677912357, 4.353798024388546)
 
 class App:
     def __init__(self) -> None:
-        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format='%(asctime)s - %(levelname)s - %(module)s:%(funcName)s - %(message)s',
+            handlers=[
+                RotatingFileHandler('./logs/hotelstate.log', maxBytes=100000, backupCount=10),
+                logging.StreamHandler()
+            ]
+        )
 
         pygame.init()
         pygame.mouse.set_visible(False)
