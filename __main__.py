@@ -4,9 +4,10 @@ import pygame
 import logging
 from logging.handlers import RotatingFileHandler
 
-from typing import Tuple
+from typing import Tuple, List
 
-from hackerspaces import HackerSpacesNL, HH_NAME
+from hackerspaces import HackerSpace, HackerSpacesNL
+from hackerspaces_renderer import HackerSpacesRenderer
 from gpio import FirmataGPIO, LampColor
 from spacestate import SpaceState, HackerHotelStateApi
 
@@ -38,17 +39,20 @@ class App:
 
         self.clock: pygame.time.Clock = pygame.time.Clock()
 
-        self.state: SpaceState = SpaceState.UNDETERMINED
+        self.state: SpaceState = SpaceState.UNDETERMINED  # data from FirmataGPIO
+        self.spaces: List[HackerSpace] = []  # data from HackerSpacesNL
 
-        self.hsnl: HackerSpacesNL = HackerSpacesNL()
         self.gpio: FirmataGPIO = FirmataGPIO(self._handle_gpio_state)
+
+        self.hsnl: HackerSpacesNL = HackerSpacesNL(self._handle_hackerspaces_update)
+        self.hsnl_renderer: HackerSpacesRenderer = HackerSpacesRenderer()
+
         self.space_api: HackerHotelStateApi = HackerHotelStateApi()
 
-        self.running: bool = True
+        self.exit_app: bool = False
 
         self.show_spark: bool = False
 
-        self.background_image: pygame.Surface = pygame.image.load('data/hsnl.png')
         self.open_sfx: pygame.mixer.Sound = pygame.mixer.Sound('data/open.wav')
         self.close_sfx: pygame.mixer.Sound = pygame.mixer.Sound('data/close.wav')
 
@@ -56,11 +60,11 @@ class App:
     def _handle_events(self) -> None:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self.running = False
+                self.exit_app = True
 
         keys = pygame.key.get_pressed()
         if keys[pygame.K_ESCAPE] or keys[pygame.K_q]:
-            self.running = False
+            self.exit_app = True
 
         if keys[pygame.K_c]:
             self.gpio.fire_confetti()
@@ -88,15 +92,18 @@ class App:
         elif state == SpaceState.CLOSED:
             self.gpio.set_color(LampColor.RED)
 
-        return
-
         self.space_api.set_state(state)
+
+        self.hsnl_renderer.update(self.spaces, self.state)
+
+
+    def _handle_hackerspaces_update(self, spaces: List[HackerSpace]) -> None:
+        self.spaces = spaces
+        self.hsnl_renderer.update(self.spaces, self.state)
 
 
     def update(self) -> None:
         self._handle_events()
-
-        self.hsnl.update()
 
 
     def draw(self) -> None:
@@ -105,40 +112,12 @@ class App:
             self.show_spark = False
             return
 
-        self.screen.fill((0, 0, 0))
-        self.screen.blit(self.background_image, (0, 0))
-
-        screen_center: Tuple[int, int] = (self.screen_width // 2, self.screen_height // 2)
-
-        for space in self.hsnl.spaces:
-            x: int = screen_center[0] + int((space.lon - NL_CENTER[0]) / NL_SCALE[0] * self.screen_width)
-            y: int = screen_center[1] - int((space.lat - NL_CENTER[1]) / NL_SCALE[1] * self.screen_height)
-
-            radius = 8
-
-            state: SpaceState = space.state
-            if space.name == HH_NAME:
-                state = self.gpio.state
-                radius = 16
-
-            if state == SpaceState.OPEN:
-                color: Tuple[int, int, int] = (0, 255, 0)
-            elif state == SpaceState.CLOSED:
-                color: Tuple[int, int, int] = (255, 0, 0)
-            else:
-                color: Tuple[int, int, int] = (255, 255, 0)
-
-            pygame.draw.circle(
-                self.screen,
-                color,
-                (x, y),
-                radius
-            )
+        self.hsnl_renderer.draw(self.screen)
 
 
     def run(self) -> None:
         try:
-            while self.running:
+            while not self.exit_app:
                 self.update()
                 self.draw()
                 pygame.display.flip()

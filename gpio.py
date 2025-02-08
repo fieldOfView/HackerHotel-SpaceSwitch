@@ -53,8 +53,8 @@ pyfirmata2.Pin.unregister_callback = pyfirmata2.Pin.unregiser_callback
 
 
 class FirmataGPIO:
-    def __init__(self, spacestate_callback: Optional[Callable[[SpaceState], None]] = None) -> None:
-        self.spacestate_callback: Optional[Callable[[SpaceState], None]] = spacestate_callback
+    def __init__(self, on_state_changed: Optional[Callable[[SpaceState], None]] = None) -> None:
+        self.on_state_changed: Optional[Callable[[SpaceState], None]] = on_state_changed
 
         self.state: Optional[SpaceState] = None
 
@@ -147,8 +147,8 @@ class FirmataGPIO:
             logging.debug('Switch is somewhere in between')
             self.state = SpaceState.UNDETERMINED
 
-        if self.state != last_state and self.spacestate_callback is not None:
-            self.spacestate_callback(self.state)
+        if self.state != last_state and self.on_state_changed is not None:
+            self.on_state_changed(self.state)
 
     def set_color(self, color: LampColor) -> None:
         red: bool = True if color==LampColor.RED or color==LampColor.YELLOW else False

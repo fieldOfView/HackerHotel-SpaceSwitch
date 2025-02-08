@@ -3,7 +3,7 @@ from threading import Thread, Lock, Event
 import logging
 import copy
 import time
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional, Callable
 
 from spacestate import SpaceState
 
@@ -25,8 +25,10 @@ class HackerSpace:
 
 
 class _GetDataThread(Thread):
-    def __init__(self) -> None:
+    def __init__(self, on_data_received: Optional[Callable[[Dict[str, Any]], None]] = None) -> None:
         super().__init__()
+
+        self._on_data_received: Optional[Callable[[Dict[str, Any]], None]] = on_data_received
 
         self._data_event: Event = Event()
         self._data_lock: Lock = Lock()
@@ -50,6 +52,9 @@ class _GetDataThread(Thread):
                 self._last_refresh: float = time.monotonic()
                 self._data_event.set()
 
+                if self._on_data_received is not None:
+                    self._on_data_received(copy.deepcopy(self._data))
+
             time.sleep(0.5)
 
     def stop(self) -> None:
@@ -68,19 +73,29 @@ class _GetDataThread(Thread):
 
 
 class HackerSpacesNL:
-    def __init__(self):
+    def __init__(self, on_spaces_changed: Optional[Callable[[List[HackerSpace]], None]] = None) -> None:
+        self._on_spaces_changed: Optional[Callable[[List[HackerSpace]], None]] = on_spaces_changed
         self.spaces: List[HackerSpace] = []
 
-        self._data_thread = _GetDataThread()
+        self._data_thread = _GetDataThread(self.on_data_received)
         self._data_thread.start()
 
-        self._data: Dict[str, Any] = None
+        self._data: Dict[str, Any] = {}
 
     def stop(self) -> None:
         logging.debug('Stopping hsnl updates')
         self._data_thread.stop()
         self._data_thread.join()
 
+    def on_data_received(self, data: Dict[str, Any]):
+        if data == self._data:
+            return
+        self._data = data
+
+        self._process(data)
+
+        if self._on_spaces_changed != None:
+            self._on_spaces_changed(self.spaces)
 
     def update(self, wait: bool=False) -> None:
         """
@@ -103,11 +118,7 @@ class HackerSpacesNL:
 
         data = self._data_thread.get_data()
 
-        if data == self._data:
-            return
-
-        self._process(data)
-        self._data = data
+        self.on_data_received(data)
 
     def _process(self, data: Dict[str, Any]):
         """
