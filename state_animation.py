@@ -143,7 +143,7 @@ if __name__ == '__main__':
 
     pygame.init()
     screen: pygame.Surface = pygame.display.set_mode(
-        (1080, 1600),
+        (1080, 1440),
     )
     clock: pygame.time.Clock = pygame.time.Clock()
 
@@ -152,36 +152,31 @@ if __name__ == '__main__':
     anim = StateAnimationRenderer(gpio)
     anim.set_state(SpaceState.OPEN)
 
+    surface = pygame.Surface((1080, 1920))
+    bg = pygame.image.load("data/test.png")
+
     try:
         while True:
             screen.fill((0,0,0))
-            anim.draw(screen)
+            surface.blit(bg, (0,0))
+            anim.draw(surface)
+            screen.blit(surface, (0, -480))
 
             pygame.display.flip()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    break
+
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_ESCAPE] or keys[pygame.K_q]:
+                break
+
             clock.tick(60)
 
+
     except KeyboardInterrupt:
-        logging.info('Closing...')
-        anim.stop()
+        pass
 
-
-# Animation steps:
-#   pause
-#   dimi up to portrait
-#   dimi confused
-#   dimi up to hh marker
-#   whack -> GREEN
-#   raised arm
-#   ORANGE
-#   dimi raised arm confused
-#   whack -> GREEN
-#   raised arm
-#   ORANGE
-#   whack -> GREEN
-#   raised arm
-#   whack -> GREEN
-#   raised arm
-#   whack -> GREEN -> BOOM
-#   dimi confused
-#   dimi thumbs up
-#   dimi leaves
+    logging.info('Closing...')
+    anim.stop()
