@@ -79,15 +79,19 @@ class StateAnimationRenderer():
         self._state_start_time: float = 0
 
         self._phrase_number: int = 0
-        self._phrase_start: float = 0
+        self._phrase_start: float = time.monotonic()
 
     def stop(self) -> None:
         self._gpio.close()
 
     def set_state(self, state: SpaceState) -> None:
-        if state != self._state:
-            self._state = state
-            self._state_start_time = time.monotonic()
+        if state == self._state:
+            return
+
+        self._state = state
+        self._state_start_time = time.monotonic()
+        self._phrase_number = 0
+        self._phrase_start = time.monotonic()
 
     def draw(self, destination: pygame.Surface) -> None:
         if self._state not in self._phrases:
