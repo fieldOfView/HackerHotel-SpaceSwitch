@@ -3,13 +3,13 @@
 import pygame
 import logging
 from logging.handlers import RotatingFileHandler
-
 from typing import Tuple, List
 
 from hackerspaces import HackerSpace, HackerSpacesNL
 from hackerspaces_renderer import HackerSpacesRenderer
 from gpio import FirmataGPIO, LampColor
 from spacestate import SpaceState, HackerHotelStateApi
+from state_animation import StateAnimationRenderer
 
 # empirical approximations to match the geo coordinates to the map
 NL_CENTER: Tuple[float, float] = (5.24791, 52.1372954)
@@ -43,11 +43,12 @@ class App:
         self.spaces: List[HackerSpace] = []  # data from HackerSpacesNL
 
         self.gpio: FirmataGPIO = FirmataGPIO(self._handle_gpio_state)
-
         self.hsnl: HackerSpacesNL = HackerSpacesNL(self._handle_hackerspaces_update)
-        self.hsnl_renderer: HackerSpacesRenderer = HackerSpacesRenderer()
 
         self.space_api: HackerHotelStateApi = HackerHotelStateApi()
+
+        self.hsnl_renderer: HackerSpacesRenderer = HackerSpacesRenderer()
+        self.animation_renderer: StateAnimationRenderer = StateAnimationRenderer(self.gpio)
 
         self.exit_app: bool = False
 
@@ -71,6 +72,8 @@ class App:
 
 
     def _handle_gpio_state(self, state: SpaceState) -> None:
+        if state != self.state:
+            self.animation_renderer.set_state(state)
         self.state = state
 
         logging.info(f'Hacker Hotel state: {state.name}')
@@ -85,10 +88,8 @@ class App:
         # update relays via GPIO
         if state == SpaceState.OPEN:
             self.gpio.set_color(LampColor.GREEN)
-
         elif state == SpaceState.UNDETERMINED:
             self.gpio.set_color(LampColor.ORANGE)
-
         elif state == SpaceState.CLOSED:
             self.gpio.set_color(LampColor.RED)
 
@@ -113,6 +114,7 @@ class App:
             return
 
         self.hsnl_renderer.draw(self.screen)
+        self.animation_renderer.draw(self.screen)
 
 
     def run(self) -> None:
