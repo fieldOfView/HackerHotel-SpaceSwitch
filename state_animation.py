@@ -20,13 +20,13 @@ class Assets():
 
     def get_surface(self, filename: str) -> pygame.Surface:
         if filename not in self._surfaces:
-            self._surfaces[filename] = pygame.image.load("data/" + filename)
+            self._surfaces[filename] = pygame.image.load(f'data/{filename}.png')
 
         return self._surfaces[filename]
 
     def get_sound(self, filename: str) -> pygame.mixer.Sound:
         if filename not in self._sounds:
-            self._sounds[filename] = pygame.mixer.Sound("data/" + filename)
+            self._sounds[filename] = pygame.mixer.Sound(f'data/{filename}.wav')
 
         return self._sounds[filename]
 
@@ -46,7 +46,7 @@ class Phrase():
         self.sound: Optional[pygame.mixer.Sound] = Assets().get_sound(sound) if sound else None
 
     def __repr__(self):
-        return f"<Phrase: duration: {self.duration}, actor: {self.actor}>"
+        return f'<Phrase: duration: {self.duration}, actor: {self.actor}>'
 
     @classmethod
     def from_json(cls, json: Dict[str, any]) -> 'Phrase':
@@ -64,7 +64,7 @@ class StateAnimationRenderer():
     def __init__(self, gpio: FirmataGPIO) -> None:
         self._gpio = gpio
 
-        logging.info("Loading state animations...")
+        logging.info('Loading state animations...')
 
         with open('data/animations.json') as json_file:
             json_data = json.load(json_file)
@@ -118,7 +118,7 @@ class StateAnimationRenderer():
 
             self._phrase_start = current_time
             phrase.duration = phrase.duration
-            logging.debug(f"Entering phrase: {self._state.name}.{self._phrase_number}")
+            logging.debug(f'Entering phrase: {self._state.name}.{self._phrase_number}')
 
             # change the lamps if necessary
             if phrase.color:
@@ -141,7 +141,7 @@ class StateAnimationRenderer():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
     pygame.init()
 
@@ -157,7 +157,7 @@ if __name__ == '__main__':
     anim.set_state(SpaceState.OPEN)
 
     surface = pygame.Surface((1080, 1920))
-    bg = pygame.image.load("data/test.png")
+    bg = pygame.image.load('data/test.png')
 
     try:
         while True:
