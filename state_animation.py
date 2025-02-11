@@ -2,10 +2,17 @@ import pygame
 import time
 import logging
 import json
+from enum import Enum
 from typing import List, Dict, Tuple, Optional
 
 from spacestate import SpaceState
 from gpio import FirmataGPIO, LampColor
+
+
+class Easing(Enum):
+    NONE = 0
+    IN = 1
+    OUT = 2
 
 
 class Assets():
@@ -32,15 +39,24 @@ class Assets():
 
 
 class Phrase():
-    def __init__(self, duration: float, actor: Optional[str] = None,
-                 from_position: Tuple[int, int] = (0,0), to_position: Optional[Tuple[int, int]] = None,
-                 color: Optional[str] = None, sound: Optional[str] = None, confetti: Optional[bool] = False) -> None:
+    def __init__(
+            self, duration: float,
+            actor: Optional[str] = None,
+            from_position: Tuple[int, int] = (0,0),
+            to_position: Optional[Tuple[int, int]] = None,
+            easing: Optional[str] = None,
+            color: Optional[str] = None,
+            sound: Optional[str] = None,
+            confetti: Optional[bool] = False
+        ) -> None:
 
         self.duration: float = duration
         self.actor: Optional[pygame.Surface] = Assets().get_surface(actor) if actor else None # Optional[pygame.Surface]
 
         self.from_position: Tuple[int, int] = from_position
         self.to_position: Tuple[int, int] = to_position if to_position else from_position
+
+        self.easing: Easing = Easing[easing] if easing else Easing.NONE
 
         self.color: Optional[LampColor] = LampColor[color] if color else None
         self.sound: Optional[pygame.mixer.Sound] = Assets().get_sound(sound) if sound else None
@@ -57,6 +73,7 @@ class Phrase():
             actor=json['actor'] if 'actor' in json else None,
             from_position=tuple(json['from']) if 'from' in json else (0,0),
             to_position=tuple(json['to']) if 'to' in json else None,
+            easing=json['easing'] if 'easing' in json else None,
             color=json['color'] if 'color' in json else None,
             sound=json['sound'] if 'sound' in json else None,
             confetti=json['confetti'] if 'confetti' in json else False
@@ -136,6 +153,12 @@ class StateAnimationRenderer():
                 self._gpio.fire_confetti()
 
         phrase_progress = (current_time - self._phrase_start) / phrase.duration
+
+        # apply easing function
+        if phrase.easing == Easing.IN:
+            phrase_progress = phrase_progress * phrase_progress
+        elif phrase.easing == Easing.OUT:
+            phrase_progress = 1 - (1 - phrase_progress) * (1 - phrase_progress)
 
         # draw the actor to the destination surface, if an actor is specified
         if phrase.actor:
