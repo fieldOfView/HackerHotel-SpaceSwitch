@@ -7,7 +7,7 @@ from typing import Optional
 from debounce import debounce
 from spacestatesecrets import API_KEY
 
-SPACESTATE_URL:str = 'https://hackerhotel.tdvenlo.nl/throwswitch.php'
+SPACESTATE_URL:str = 'https://state.hackerhotel.nl/throwswitch.php'
 
 
 class SpaceState(Enum):
