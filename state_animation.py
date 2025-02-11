@@ -34,7 +34,7 @@ class Assets():
 class Phrase():
     def __init__(self, duration: float, actor: Optional[str] = None,
                  from_position: Tuple[int, int] = (0,0), to_position: Optional[Tuple[int, int]] = None,
-                 color: Optional[str] = None, sound: Optional[str] = None) -> None:
+                 color: Optional[str] = None, sound: Optional[str] = None, confetti: Optional[bool] = False) -> None:
 
         self.duration: float = duration
         self.actor: Optional[pygame.Surface] = Assets().get_surface(actor) if actor else None # Optional[pygame.Surface]
@@ -44,6 +44,8 @@ class Phrase():
 
         self.color: Optional[LampColor] = LampColor[color] if color else None
         self.sound: Optional[pygame.mixer.Sound] = Assets().get_sound(sound) if sound else None
+
+        self.confetti: Optional[bool] = confetti
 
     def __repr__(self):
         return f'<Phrase: duration: {self.duration}, actor: {self.actor}>'
@@ -56,7 +58,8 @@ class Phrase():
             from_position=tuple(json['from']) if 'from' in json else (0,0),
             to_position=tuple(json['to']) if 'to' in json else None,
             color=json['color'] if 'color' in json else None,
-            sound=json['sound'] if 'sound' in json else None
+            sound=json['sound'] if 'sound' in json else None,
+            confetti=json['confetti'] if 'confetti' in json else False
         )
 
 
@@ -127,6 +130,10 @@ class StateAnimationRenderer():
             # play a sound if necessary
             if phrase.sound:
                 phrase.sound.play()
+
+            # fire the confetti canons! (if necessary in this phrase)
+            if phrase.confetti:
+                self._gpio.fire_confetti()
 
         phrase_progress = (current_time - self._phrase_start) / phrase.duration
 
