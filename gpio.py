@@ -32,11 +32,11 @@ class ArduinoPin(Enum):
 
 
 class LampColor(Enum):
-    OFF = 0
-    RED = 1
-    ORANGE = 2
-    YELLOW = 3
-    GREEN = 4
+    OFF = (0, 0, 0)
+    RED = (255, 0, 0)
+    ORANGE = (248, 199, 49)
+    YELLOW = (255, 240, 0)
+    GREEN = (0, 255, 0)
 
 
 # fix an uncaught exception in pyfirmata2.Arduino.__del__

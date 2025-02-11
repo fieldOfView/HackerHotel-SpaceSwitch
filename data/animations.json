@@ -1,5 +1,6 @@
 {
     "CLOSED": [],
+    "UNDETERMINED": [],
     "OPEN": [
         {"duration": 1.0, "color": "ORANGE"},
         {"duration": 2.0, "actor": "closeup_neutral", "from": [220,1920], "to": [220,1408], "easing": "OUT"},
@@ -22,16 +23,16 @@
         {"duration": 0.5, "actor": "dimi_whack", "from": [320, 500], "sound":"whack", "color": "GREEN"},
         {"duration": 1.5, "actor": "dimi_raised_arm", "from": [320, 500]},
 
-        {"duration": 3.0, "actor": "dimi_flying", "from": [320, 500], "color": "ORANGE"},
-        {"duration": 0.5, "actor": "dimi_whack", "from": [320, 500], "sound":"whack", "color": "GREEN"},
+        {"duration": 3.0, "actor": "dimi_angry", "from": [320, 500], "color": "ORANGE"},
+        {"duration": 0.5, "actor": "dimi_whack", "from": [320, 500], "sound":"whack", "color": "YELLOW"},
         {"duration": 0.25, "actor": "dimi_raised_arm", "from": [320, 500]},
-        {"duration": 0.5, "actor": "dimi_whack", "from": [320, 500], "sound":"whack", "color": "GREEN"},
+        {"duration": 0.5, "actor": "dimi_whack", "from": [320, 500], "sound":"whack", "color": "OFF"},
         {"duration": 0.25, "actor": "dimi_raised_arm", "from": [320, 500]},
-        {"duration": 0.5, "actor": "dimi_whack", "from": [320, 500], "sound":"whack", "color": "GREEN"},
+        {"duration": 0.5, "actor": "dimi_whack", "from": [320, 500], "sound":"whack", "color": "YELLOW"},
         {"duration": 0.25, "actor": "dimi_raised_arm", "from": [320, 500]},
-        {"duration": 0.5, "actor": "dimi_whack", "from": [320, 500], "sound":"whack"},
+        {"duration": 0.5, "actor": "dimi_whack", "from": [320, 500], "sound":"whack", "color": "RED"},
         {"duration": 1.0, "actor": "dimi_raised_arm", "from": [320, 500]},
-        {"duration": 0.5, "actor": "dimi_whack", "from": [320, 500], "sound":"whack", "confetti": true},
+        {"duration": 0.5, "actor": "dimi_whack", "from": [320, 500], "sound":"whack", "color": "GREEN", "confetti": true},
         {"duration": 2.0, "actor": "dimi_surprised", "from": [320, 500], "sound": "cheers"},
 
         {"duration": 7, "actor": "dimi_surprised", "from": [320, 500], "to": [960, 1920], "easing": "IN"}

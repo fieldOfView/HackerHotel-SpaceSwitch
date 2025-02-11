@@ -97,9 +97,12 @@ class StateAnimationRenderer():
 
         self._state = SpaceState.UNDETERMINED
         self._state_start_time: float = 0
+        self._state_color: Optional[LampColor] = None
 
         self._phrase_number: int = 0
         self._phrase_start: float = time.monotonic()
+
+        self._hotel_coordinates: Optional[Tuple[int, int]] = None
 
     def stop(self) -> None:
         self._gpio.close()
@@ -110,6 +113,7 @@ class StateAnimationRenderer():
 
         self._state = state
         self._state_start_time = time.monotonic()
+        self._state_color = None
         self._phrase_number = 0
         self._phrase_start = time.monotonic()
 
@@ -144,6 +148,8 @@ class StateAnimationRenderer():
             if phrase.color:
                 self._gpio.set_color(phrase.color)
 
+                self._state_color = phrase.color.value
+
             # play a sound if necessary
             if phrase.sound:
                 phrase.sound.play()
@@ -151,6 +157,14 @@ class StateAnimationRenderer():
             # fire the confetti canons! (if necessary in this phrase)
             if phrase.confetti:
                 self._gpio.fire_confetti()
+
+        if self._hotel_coordinates and self._state_color:
+            pygame.draw.circle(
+                destination,
+                self._state_color,
+                self._hotel_coordinates,
+                16
+            )
 
         phrase_progress = (current_time - self._phrase_start) / phrase.duration
 
@@ -167,6 +181,9 @@ class StateAnimationRenderer():
                 for c in zip (phrase.from_position, phrase.to_position)
             )
             destination.blit(phrase.actor, coordinate)
+
+    def set_hotel_coordinates(self, hotel_coordinates: Tuple[int, int]):
+        self._hotel_coordinates = hotel_coordinates
 
 
 

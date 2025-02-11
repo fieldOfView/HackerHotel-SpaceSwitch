@@ -2,6 +2,7 @@
 
 import pygame
 import logging
+import traceback
 from logging.handlers import RotatingFileHandler
 from typing import Tuple, List
 
@@ -105,6 +106,9 @@ class App:
 
     def update(self) -> None:
         self._handle_events()
+        hotel_coordinates = self.hsnl_renderer.get_hotel_coordinates()
+        if hotel_coordinates:
+            self.animation_renderer.set_hotel_coordinates(hotel_coordinates)
 
 
     def draw(self) -> None:
@@ -113,6 +117,7 @@ class App:
             self.show_spark = False
             return
 
+        self.screen.fill((0,0,0))
         self.hsnl_renderer.draw(self.screen)
         self.animation_renderer.draw(self.screen)
 
@@ -127,6 +132,8 @@ class App:
                 self.clock.tick(60)
         except KeyboardInterrupt:
             pass
+        except Exception:
+            traceback.print_exc()
 
         # cleanup
         self.gpio.close()
