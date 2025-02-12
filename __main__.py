@@ -40,23 +40,23 @@ class App:
 
         self.clock: pygame.time.Clock = pygame.time.Clock()
 
+        self.open_sfx: pygame.mixer.Sound = pygame.mixer.Sound('data/open.wav')
+        self.close_sfx: pygame.mixer.Sound = pygame.mixer.Sound('data/close.wav')
+
         self.state: SpaceState = SpaceState.UNDETERMINED  # data from FirmataGPIO
         self.spaces: List[HackerSpace] = []  # data from HackerSpacesNL
 
+        self.space_api: HackerHotelStateApi = HackerHotelStateApi()
+
         self.gpio: FirmataGPIO = FirmataGPIO(self._handle_gpio_state)
         self.hsnl: HackerSpacesNL = HackerSpacesNL(self._handle_hackerspaces_update)
-
-        self.space_api: HackerHotelStateApi = HackerHotelStateApi()
 
         self.hsnl_renderer: HackerSpacesRenderer = HackerSpacesRenderer()
         self.animation_renderer: StateAnimationRenderer = StateAnimationRenderer(self.gpio)
 
         self.exit_app: bool = False
-
         self.show_spark: bool = False
 
-        self.open_sfx: pygame.mixer.Sound = pygame.mixer.Sound('data/open.wav')
-        self.close_sfx: pygame.mixer.Sound = pygame.mixer.Sound('data/close.wav')
 
 
     def _handle_events(self) -> None:
@@ -73,7 +73,7 @@ class App:
 
 
     def _handle_gpio_state(self, state: SpaceState) -> None:
-        if state != self.state:
+        if hasattr(self, 'animation_renderer') and state != self.state:
             self.animation_renderer.set_state(state)
         self.state = state
 
