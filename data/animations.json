@@ -25,13 +25,13 @@
 
         {"duration": 3.0, "actor": "dimi_angry", "from": [320, 500], "color": "ORANGE"},
         {"duration": 0.5, "actor": "dimi_whack", "from": [320, 500], "sound":"whack", "color": "YELLOW"},
-        {"duration": 0.25, "actor": "dimi_raised_arm", "from": [320, 500]},
+        {"duration": 0.1, "actor": "dimi_raised_arm", "from": [320, 500]},
         {"duration": 0.5, "actor": "dimi_whack", "from": [320, 500], "sound":"whack", "color": "OFF"},
-        {"duration": 0.25, "actor": "dimi_raised_arm", "from": [320, 500]},
+        {"duration": 0.1, "actor": "dimi_raised_arm", "from": [320, 500]},
         {"duration": 0.5, "actor": "dimi_whack", "from": [320, 500], "sound":"whack", "color": "YELLOW"},
-        {"duration": 0.25, "actor": "dimi_raised_arm", "from": [320, 500]},
+        {"duration": 0.1, "actor": "dimi_raised_arm", "from": [320, 500]},
         {"duration": 0.5, "actor": "dimi_whack", "from": [320, 500], "sound":"whack", "color": "RED"},
-        {"duration": 1.0, "actor": "dimi_raised_arm", "from": [320, 500]},
+        {"duration": 2.0, "actor": "dimi_raised_arm", "from": [320, 500]},
         {"duration": 0.5, "actor": "dimi_whack", "from": [320, 500], "sound":"whack", "color": "GREEN", "confetti": true},
         {"duration": 2.0, "actor": "dimi_surprised", "from": [320, 500], "sound": "cheers"},
 
