@@ -3,9 +3,9 @@
     "UNDETERMINED": [],
     "OPEN": [
         {"duration": 1.0, "color": "ORANGE"},
-        {"duration": 2.0, "actor": "closeup_neutral", "from": [220,1920], "to": [220,1408], "easing": "OUT"},
+        {"duration": 2.0, "actor": "closeup_neutral", "from": [220,1920], "to": [220,1408], "easing": "OUT", "sound": "violin"},
         {"duration": 1.5, "actor": "closeup_neutral", "from": [220,1408]},
-        {"duration": 0.5, "actor": "closeup_blink", "from": [220,1408]},
+        {"duration": 0.5, "actor": "closeup_blink", "from": [220,1408], "sound": "blink"},
         {"duration": 2.0, "actor": "closeup_surprised", "from": [220,1408]},
         {"duration": 0.5, "actor": "closeup_surprised", "from": [220,1408], "to": [220,1920], "easing": "OUT", "sound": "vanish"},
         {"duration": 1.0},
