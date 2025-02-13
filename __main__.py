@@ -54,6 +54,8 @@ class App:
         self.hsnl_renderer: HackerSpacesRenderer = HackerSpacesRenderer()
         self.animation_renderer: StateAnimationRenderer = StateAnimationRenderer(self.gpio)
 
+        self.logo: pygame.Surface = pygame.image.load("data/logo.png")
+
         self.exit_app: bool = False
         self.show_spark: bool = False
 
@@ -119,6 +121,7 @@ class App:
 
         self.screen.fill((0,0,0))
         self.hsnl_renderer.draw(self.screen)
+        self.screen.blit(self.logo, (0, self.screen_height - self.logo.get_height()))
         self.animation_renderer.draw(self.screen)
 
 
