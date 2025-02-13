@@ -4,6 +4,7 @@
     "OPEN": [
         {"duration": 1.0, "color": "ORANGE"},
         {"duration": 2.0, "actor": "closeup_neutral", "from": [220,1920], "to": [220,1408], "easing": "OUT", "sound": "violin"},
+
         {"duration": 1.5, "actor": "closeup_neutral", "from": [220,1408]},
         {"duration": 0.5, "actor": "closeup_blink", "from": [220,1408], "sound": "blink"},
         {"duration": 2.0, "actor": "closeup_surprised", "from": [220,1408]},
@@ -35,6 +36,8 @@
         {"duration": 0.5, "actor": "dimi_whack", "from": [320, 500], "sound":"whack", "color": "GREEN", "confetti": true},
         {"duration": 2.0, "actor": "dimi_surprised", "from": [320, 500], "sound": "cheers"},
 
-        {"duration": 7, "actor": "dimi_surprised", "from": [320, 500], "to": [960, 1920], "easing": "IN"}
+        {"duration": 7, "actor": "dimi_surprised", "from": [320, 500], "to": [960, 1920], "easing": "IN"},
+
+        {"duration": -1, "actor": "open", "from": [24, 32]}
     ]
 }

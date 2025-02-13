@@ -131,7 +131,7 @@ class StateAnimationRenderer():
         phrase: Phrase = phrases[self._phrase_number]
         current_time: float = time.monotonic()
 
-        if current_time - self._phrase_start > phrase.duration:
+        if phrase.duration >= 0 and (current_time - self._phrase_start > phrase.duration):
             self._phrase_number += 1
 
             if self._phrase_number >= len(phrases):
@@ -166,7 +166,10 @@ class StateAnimationRenderer():
                 16
             )
 
-        phrase_progress = (current_time - self._phrase_start) / phrase.duration
+        if phrase.duration > 0:
+            phrase_progress = (current_time - self._phrase_start) / phrase.duration
+        else:
+            phrase_progress = 0
 
         # apply easing function
         if phrase.easing == Easing.IN:
