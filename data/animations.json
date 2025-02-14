@@ -2,9 +2,9 @@
     "CLOSED": [],
     "UNDETERMINED": [],
     "OPEN": [
-        {"duration": 1.0, "color": "ORANGE"},
+        {"duration": 1.0, "color": "GREEN"},
+        {"duration": 2.0, "color": "ORANGE"},
         {"duration": 2.0, "actor": "closeup_neutral", "from": [220,1920], "to": [220,1408], "easing": "OUT", "sound": "violin"},
-
         {"duration": 1.5, "actor": "closeup_neutral", "from": [220,1408]},
         {"duration": 0.5, "actor": "closeup_blink", "from": [220,1408], "sound": "blink"},
         {"duration": 2.0, "actor": "closeup_surprised", "from": [220,1408]},
@@ -25,14 +25,14 @@
         {"duration": 1.5, "actor": "dimi_raised_arm", "from": [320, 500]},
 
         {"duration": 3.0, "actor": "dimi_angry", "from": [320, 500], "color": "ORANGE"},
+        {"duration": 0.2, "actor": "dimi_whack", "from": [320, 500], "sound":"whack", "color": "YELLOW"},
+        {"duration": 0.15, "actor": "dimi_raised_arm", "from": [320, 500]},
+        {"duration": 0.2, "actor": "dimi_whack", "from": [320, 500], "sound":"whack", "color": "ORANGE"},
+        {"duration": 0.5, "actor": "dimi_raised_arm", "from": [320, 500]},
+        {"duration": 0.2, "actor": "dimi_whack", "from": [320, 500], "sound":"whack", "color": "RED"},
+        {"duration": 0.25, "actor": "dimi_raised_arm", "from": [320, 500]},
         {"duration": 0.5, "actor": "dimi_whack", "from": [320, 500], "sound":"whack", "color": "YELLOW"},
-        {"duration": 0.1, "actor": "dimi_raised_arm", "from": [320, 500]},
-        {"duration": 0.5, "actor": "dimi_whack", "from": [320, 500], "sound":"whack", "color": "OFF"},
-        {"duration": 0.1, "actor": "dimi_raised_arm", "from": [320, 500]},
-        {"duration": 0.5, "actor": "dimi_whack", "from": [320, 500], "sound":"whack", "color": "YELLOW"},
-        {"duration": 0.1, "actor": "dimi_raised_arm", "from": [320, 500]},
-        {"duration": 0.5, "actor": "dimi_whack", "from": [320, 500], "sound":"whack", "color": "RED"},
-        {"duration": 2.0, "actor": "dimi_raised_arm", "from": [320, 500]},
+        {"duration": 1.0, "actor": "dimi_raised_arm", "from": [320, 500]},
         {"duration": 0.5, "actor": "dimi_whack", "from": [320, 500], "sound":"whack", "color": "GREEN", "confetti": true},
         {"duration": 2.0, "actor": "dimi_surprised", "from": [320, 500], "sound": "cheers"},
 
