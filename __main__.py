@@ -70,8 +70,8 @@ class App:
         if keys[pygame.K_ESCAPE] or keys[pygame.K_q]:
             self.exit_app = True
 
-        if keys[pygame.K_c]:
-            self.gpio.fire_confetti()
+        #if keys[pygame.K_c]:
+        #    self.gpio.fire_confetti()
 
 
     def _handle_gpio_state(self, state: SpaceState) -> None:
