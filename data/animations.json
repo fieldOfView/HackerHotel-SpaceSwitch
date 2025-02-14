@@ -3,6 +3,7 @@
     "UNDETERMINED": [],
     "OPEN": [
         {"duration": 2.0, "color": "GREEN"},
+
         {"duration": 2.0, "color": "ORANGE"},
         {"duration": 2.0, "actor": "closeup_neutral", "from": [220,1920], "to": [220,1408], "easing": "OUT", "sound": "violin"},
         {"duration": 1.5, "actor": "closeup_neutral", "from": [220,1408]},
@@ -39,6 +40,6 @@
 
         {"duration": 7, "actor": "dimi_surprised", "from": [320, 500], "to": [960, 1920], "easing": "IN"},
 
-        {"duration": -1, "actor": "open", "from": [48, 65]}
+        {"duration": -1, "actor": "open", "from": [128, 192]}
     ]
 }
